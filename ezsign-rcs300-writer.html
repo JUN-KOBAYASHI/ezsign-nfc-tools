@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EZ Sign × RC-S300 Writer v6.24 image upload</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg:#ffffff; --bg-sub:#f5f5f3; --fg:#1a1a18; --fg-sub:#66665f;
+    --border:rgba(0,0,0,.12); --success-bg:#eaf3de; --success-fg:#27500a;
+    --danger-bg:#fcebeb; --danger-fg:#791f1f; --info-bg:#e6f1fb; --info-fg:#0c447c;
+    --warning-bg:#faeeda; --warning-fg:#633806; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#1a1a18; --bg-sub:#2a2a28; --fg:#f5f5f3; --fg-sub:#a8a8a0; --border:rgba(255,255,255,.15); --success-bg:#173404; --success-fg:#c0dd97; --danger-bg:#501313; --danger-fg:#f7c1c1; --info-bg:#042c53; --info-fg:#b5d4f4; --warning-bg:#412402; --warning-fg:#fac775; }
+  }
+  *{box-sizing:border-box} body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:2rem 1rem;line-height:1.6}.container{max-width:920px;margin:0 auto}h1{font-size:22px;font-weight:600;margin:0 0 .4rem}h2{font-size:15px;font-weight:600;margin:1.2rem 0 .5rem}.lead{color:var(--fg-sub);font-size:14px;margin:0 0 1.2rem}code{font-family:var(--mono);font-size:12px;background:var(--bg-sub);padding:1px 5px;border-radius:3px}.buttons{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}button{background:transparent;color:var(--fg);border:.5px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit}button:hover:not(:disabled){background:var(--bg-sub)}button:disabled{opacity:.4;cursor:not-allowed}button.primary{background:var(--info-bg);color:var(--info-fg);border-color:var(--info-fg);font-weight:600}button.success{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-fg);font-weight:600}button.warn{background:var(--warning-bg);color:var(--warning-fg);border-color:var(--warning-fg)}#status{font-size:13px;padding:10px 14px;border-radius:8px;background:var(--bg-sub);margin-bottom:1rem;min-height:20px}.status-info{background:var(--bg-sub);color:var(--fg)}.status-success{background:var(--success-bg);color:var(--success-fg)}.status-danger{background:var(--danger-bg);color:var(--danger-fg)}.status-warning{background:var(--warning-bg);color:var(--warning-fg)}#log{background:var(--bg-sub);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:11.5px;line-height:1.55;max-height:620px;overflow-y:auto;white-space:pre-wrap}.log-tx{color:var(--info-fg)}.log-rx{color:var(--success-fg)}.log-err{color:var(--danger-fg)}.log-sys{color:var(--fg-sub)}.log-good{color:var(--success-fg);font-weight:700}.panel{background:var(--bg);border:.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:12px}.help{background:var(--bg-sub);border-radius:8px;padding:12px 16px;margin-bottom:1rem;font-size:13px;color:var(--fg-sub)}.help strong{color:var(--fg);font-weight:600}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}input[type="text"],input[type="number"]{background:var(--bg);color:var(--fg);border:.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--mono);width:100%}#info-box{display:none;background:var(--success-bg);color:var(--success-fg);padding:12px 16px;border-radius:8px;margin-bottom:1rem;font-family:var(--mono);font-size:12px;white-space:pre-wrap}.small{font-size:13px;color:var(--fg-sub);margin:.1rem 0 .7rem}.row{display:flex;gap:8px;flex-wrap:wrap}.inline-check{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--fg-sub);border:.5px solid var(--border);border-radius:8px;padding:7px 10px;background:var(--bg)}.badge{display:inline-block;font-family:var(--mono);font-size:11px;border:.5px solid var(--border);border-radius:999px;padding:2px 8px;margin-left:6px;color:var(--fg-sub)}
+
+  .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.field{display:flex;flex-direction:column;gap:4px;min-width:0}.field label{font-size:12px;color:var(--fg-sub)}select,input[type="file"],input[type="range"]{background:var(--bg);color:var(--fg);border:.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;width:100%;min-width:0}.preview-wrap{display:grid;grid-template-columns:repeat(2,max-content);gap:14px;align-items:start;justify-content:center;margin:10px auto 12px}.preview-card{border:.5px solid var(--border);border-radius:10px;padding:10px;background:var(--bg-sub);width:fit-content;max-width:100%;text-align:center}.preview-card canvas{width:auto;max-width:100%;height:auto;display:block;margin:0 auto;image-rendering:auto;background:#fff;border-radius:6px;border:.5px solid var(--border);cursor:grab}.preview-card canvas:active{cursor:grabbing}.scale-label-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.scale-label-row label{margin-right:auto}.range-field>.scale-label-row,.range-field>label:first-child{min-height:34px;display:flex;align-items:center;margin:0}.range-field input[type="range"]{display:block;margin-top:0}.mini-btn{padding:4px 8px!important;font-size:12px!important}.preview-card .small{text-align:left}.note{font-size:12px;color:var(--fg-sub)}.algo-list{font-size:12px;color:var(--fg-sub);margin:6px 0 0;padding-left:1.1rem;overflow-x:auto}.algo-list li{white-space:nowrap;line-height:1.55}.algo-list strong{color:var(--fg)}.meter-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px}.process-stage{font-family:var(--mono);font-size:12px;color:var(--fg-sub);margin:0}.meter{height:8px;background:var(--bg-sub);border-radius:999px;overflow:hidden;border:.5px solid var(--border);margin:6px 0 8px}.meter>div{height:100%;width:0%;background:var(--info-fg);transition:width .15s}.danger-text{color:var(--danger-fg);font-weight:600}.algo-desc{background:var(--bg-sub);border:.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--fg);margin-top:10px}.formgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start}.control-note{font-size:11px;color:var(--fg-sub);margin-top:2px}.debug-only{} .mode-normal .debug-only{display:none!important}.mode-normal #process-note,.mode-normal #device-color-note,.mode-normal #info-box{display:none!important}.mode-switch{margin-top:16px;padding:12px 14px;border:.5px solid var(--border);border-radius:12px;background:var(--bg-sub);display:flex;justify-content:flex-end;align-items:center;gap:10px}.mode-switch label{font-size:13px;color:var(--fg-sub)}.mode-switch select{width:auto;min-width:140px}.slider-pair{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.slider-pair .range-field{min-width:0}
+  @media (max-width:720px){.formgrid,.formgrid3,.preview-wrap{grid-template-columns:1fr;justify-content:stretch}.preview-card{width:100%}.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body class="mode-normal">
+<div class="container">
+  <h1>EZ Sign × RC-S300 Writer v6.24 <span class="badge">画像アップロード / 自動向き補正</span></h1>
+  <p class="lead">RC-S300（WebUSB経由）で、お手元の画像をEZ Signに書き込むためのツールです。画像を選ぶと、中央トリミング・サイズ調整・4色ディザ変換まで自動で行い、そのままアップロードできます。<br><span style="font-size:12px;">※ 動作確認は <strong>RC-S300/S（業務用モデル）</strong> のみで行っています。一般向けの RC-S300/P では未検証です。</span></p>
+
+  <div class="help debug-only">
+    <strong>対応サイズ:</strong> 4.2inch <code>400 x 300</code> と 2.9inch <code>296 x 128</code> の2種類です。基本は <strong>Auto</strong> でOK（接続時に GET INFO で勝手に判定します）。デバイスを繋ぐ前にプレビューだけ確認したい場合だけ、手動でサイズを選んでください。
+    <br><strong>トリミング:</strong> 画面の比率に合わせ、画像の長辺側を基準にして拡大→中央を切り出します。スケールを下げれば余白付きで縮小、上げればもっと大きく切り出せます。
+    <br><strong>向き補正:</strong> 既定では送信データだけを補正し、プレビューは「実際に見える向き」を優先表示します（左右反転はプレビュー側には反映しません）。うまくいかない時は手動切り替えで調整できます。
+    <br><strong>圧縮:</strong> ブラウザだけで完結する純JavaScript製のLZO互換リテラル圧縮を使っています。写真など情報量の多い画像は、自動で複数フラグメントに分けて送信されます。
+  </div>
+
+  <div class="buttons">
+    <button type="button" id="btn-connect" class="primary">RC-S300 に接続</button>
+    <button type="button" id="btn-disconnect" disabled>切断</button>
+    <button type="button" id="btn-detect-device" class="debug-only warn" disabled>デバイス判定（GET INFO）</button>
+    <label class="debug-only inline-check"><input type="checkbox" id="chk-auto-detect" checked> 自動監視（カード交換を定期検出）</label>
+    <label class="debug-only inline-check"><input type="checkbox" id="chk-min-poll-log" checked> ポーリングログを最小にする</label>
+    <label class="debug-only inline-check"><input type="checkbox" id="chk-refresh-poll" checked> 画面更新をポーリング確認</label>
+    <label class="debug-only inline-check">更新確認タイムアウト秒 <input type="number" id="refresh-poll-timeout-sec" value="120" min="30" max="300" step="10" style="width:72px;padding:3px 6px;"></label>
+  </div>
+
+  <div id="status" class="status-info">未接続。</div>
+  <div id="info-box"></div>
+
+  <div class="panel">
+    <h2 style="margin-top:0">① 画像読み込み・変換</h2>
+    <div class="formgrid">
+      <div class="field">
+        <label for="image-file">画像ファイル</label>
+        <input type="file" id="image-file" accept="image/*">
+      </div>
+      <div class="field">
+        <label for="target-size">画面サイズ</label>
+        <select id="target-size">
+          <option value="auto" selected>Auto - EZ Signから自動判定（推奨）</option>
+          <option value="400x300">4.2inch - 400 x 300</option>
+          <option value="296x128">2.9inch - 296 x 128（横表示）</option>
+          <option value="128x296">2.9inch - 128 x 296（内部向き/検証用・通常は使わない）</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="dither-algo">ディザリング方式</label>
+        <select id="dither-algo">
+          <option value="floyd">Floyd-Steinberg</option>
+          <option value="atkinson">Atkinson</option>
+          <option value="jjn">Jarvis, Judice, and Ninke (JJN)</option>
+          <option value="stucki">Stucki</option>
+          <option value="burkes">Burkes</option>
+          <option value="sierra3">Sierra3</option>
+          <option value="sierra2">Sierra2</option>
+          <option value="sierra-lite" selected>Sierra Lite</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="orientation-mode">向き補正</label>
+        <select id="orientation-mode">
+          <option value="auto" selected>Auto - 4.2そのまま / 2.9左右補正</option>
+          <option value="manual">Manual - 下の回転/左右反転を使う</option>
+          <option value="none">補正なし</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="crop-bg-fill">余白塗りつぶし</label>
+        <select id="crop-bg-fill">
+          <option value="none" selected>塗りつぶさない</option>
+          <option value="white">白</option>
+          <option value="black">黒</option>
+          <option value="yellow">黄</option>
+          <option value="red">赤</option>
+        </select>
+      </div>
+      <div class="field debug-only">
+        <label for="manual-rotate">手動回転</label>
+        <select id="manual-rotate">
+          <option value="0" selected>0°</option>
+          <option value="90">90° clockwise</option>
+          <option value="270">90° counter-clockwise</option>
+          <option value="180">180°</option>
+        </select>
+        <label class="control-note"><input type="checkbox" id="manual-flip-h"> 左右反転する</label>
+      </div>
+
+      <div class="slider-pair">
+        <div class="field range-field">
+          <div class="scale-label-row">
+            <label for="image-scale">画像スケール: <span id="image-scale-value">100</span>%</label>
+            <button type="button" id="btn-scale-fit" class="mini-btn">全体を収める 80%</button>
+            <button type="button" id="btn-scale-reset" class="mini-btn">100%に戻す</button>
+            <button type="button" id="btn-pan-reset" class="mini-btn">位置をリセット</button>
+          </div>
+          <input type="range" id="image-scale" min="10" max="250" step="1" value="100">
+        </div>
+        <div class="field range-field">
+          <label for="brightness">明るさ補正: <span id="brightness-value">0</span></label>
+          <input type="range" id="brightness" min="-80" max="80" step="1" value="0">
+        </div>
+      </div>
+    </div>
+    <div class="preview-wrap" id="preview-wrap">
+      <div class="preview-card">
+        <div class="small">トリミング後（入力画像）</div>
+        <canvas id="canvas-source" width="400" height="300"></canvas>
+      </div>
+      <div class="preview-card">
+        <div class="small">4色ディザ変換後（表示プレビュー）</div>
+        <canvas id="canvas-dither" width="400" height="300"></canvas>
+      </div>
+    </div>
+    <div class="note" style="text-align:center;margin:-4px 0 8px;">※ プレビュー画像はマウスでドラッグして位置を調整できます。「位置をリセット」で中央に戻ります。</div>
+    <div id="algo-description" class="algo-desc"></div>
+    <div class="row" style="margin-top:12px;align-items:center;justify-content:space-between;gap:10px;">
+      <div class="row" style="gap:8px;align-items:center;">
+        <button type="button" id="btn-upload-image" class="success" disabled>画像をEZ Signにアップロード</button>
+        <button type="button" id="btn-refresh-only" class="warn debug-only" disabled>Refreshのみ再実行</button>
+        <button type="button" id="btn-poll-only" class="warn debug-only" disabled>POLLのみ</button>
+      </div>
+      <div class="row debug-only" style="gap:8px;align-items:center;">
+        <label for="source-mode" class="small" style="margin:0;white-space:nowrap;">チェックモード</label>
+        <select id="source-mode" style="width:auto;min-width:220px;">
+          <option value="image" selected>通常画像</option>
+          <option value="colorcheck-raw">RAW 0/1/2/3 バー</option>
+          <option value="colorcheck-bars">論理4色バー</option>
+          <option value="colorcheck-grid">論理4色グリッド</option>
+        </select>
+        <select id="color-map" style="width:auto;min-width:230px;">
+          <option value="standard" selected>色マップ: 標準 0黒/1白/2黄/3赤</option>
+          <option value="swap01">色マップ: 候補A 0白/1黒/2黄/3赤</option>
+          <option value="swap23">色マップ: 候補B 0黒/1白/2赤/3黄</option>
+          <option value="invert_pairs">色マップ: 候補C 0白/1黒/2赤/3黄</option>
+        </select>
+      </div>
+    </div>
+    <div class="small debug-only" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:10px;">
+      <span>書き換え後は <code>F0 DE 00 00 01</code> で更新完了を確認し、完了後に自動監視を再開します。</span>
+    </div>
+    <div class="meter-head"><div class="small" style="margin:0">進行状況</div><div id="progress-stage" class="process-stage">待機中</div></div><div class="meter"><div id="progress-bar"></div></div>
+    <div id="process-note" class="note">画像を選択するとプレビューできます。</div>
+    <div id="device-color-note" class="note" style="margin-top:6px;"></div>
+  </div>
+
+  <div class="panel debug-only">
+    <h2 style="margin-top:0">② アルゴリズム説明</h2>
+    <ul class="algo-list">
+      <li><strong>Floyd-Steinberg:</strong> 一番オーソドックス。明るさのバランスが良いので迷ったらこれ。</li>
+      <li><strong>Atkinson:</strong> 輪郭がくっきりめでコントラスト強め。ロゴやイラスト向き。</li>
+      <li><strong>JJN:</strong> 階調はなめらかだが、少し眠い印象になりがち。</li>
+      <li><strong>Stucki:</strong> JJNと Floyd の中間くらい。なめらかさとシャープさの両取り。</li>
+      <li><strong>Burkes:</strong> 軽めで処理も速い。クセが少ないバランス型。</li>
+      <li><strong>Sierra:</strong> 安定感あり。Lite は計算が軽く、サクッと動かしたい時に。</li>
+    </ul>
+  </div>
+
+  <div class="panel debug-only">
+    <h2 style="margin-top:0">③ 診断・個別テスト</h2>
+    <p class="small">通信周りを切り分けて確認したい時用です。普通に画像アップロードするだけなら触らなくて大丈夫です。</p>
+    <div class="grid3">
+      <button type="button" id="btn-auto" class="success" disabled>自動診断: AUTH → GET INFO</button>
+      <button type="button" id="btn-activate-basic" disabled>Activate basic 00 03 00 + RATS</button>
+      <button type="button" id="btn-info" disabled>GET INFO</button>
+      <button type="button" id="btn-auth" disabled>I-Block AUTH</button>
+      <button type="button" id="btn-rats" disabled>RATSのみ E0 80</button>
+      <button type="button" id="btn-uid" disabled>PC/SC GET UID</button>
+    </div>
+  </div>
+
+  <div class="panel debug-only">
+    <h2 style="margin-top:0">⑤ リーダー情報</h2>
+    <div class="grid2">
+      <button type="button" id="btn-firmware" disabled>Get Firmware (FF 56 00 00)</button>
+      <button type="button" id="btn-serial" disabled>Get Serial (FF 5F 03 00)</button>
+    </div>
+  </div>
+
+  <div class="log-header debug-only" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:1.2rem;">
+    <h2 style="margin:0">通信ログ</h2>
+    <div class="row" style="gap:8px;align-items:center;">
+      <button type="button" id="btn-copy-log">通信ログをコピー</button>
+      <button type="button" id="btn-clear-log">ログクリア</button>
+    </div>
+  </div>
+  <div id="log" class="debug-only"></div>
+
+  <div class="mode-switch">
+    <label for="ui-mode">表示モード</label>
+    <select id="ui-mode">
+      <option value="normal" selected>通常モード</option>
+      <option value="debug">デバッグモード</option>
+    </select>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const log = $('log');
+  const status = $('status');
+
+  let device = null;
+  let cfg = { ifaceNum: 1, epIn: 2, epOut: 2 };
+  let seq = 0;
+  let isoBlockNum = 0;
+  let activated = false;
+  let authenticated = false;
+  let busy = false;
+
+  // -------------------------------------------------------------------------
+  // Logging / utilities
+  // -------------------------------------------------------------------------
+  function ts() {
+    const d = new Date();
+    return d.toTimeString().slice(0, 8) + '.' + String(d.getMilliseconds()).padStart(3, '0');
+  }
+  function isMinPollLogEnabled() {
+    const el = $('chk-min-poll-log');
+    return !!(el && el.checked);
+  }
+  function logLine(cls, msg) {
+    if (quietLogDepth > 0 && isMinPollLogEnabled()) return;
+    const e = document.createElement('div');
+    e.className = 'log-' + cls;
+    e.textContent = `[${ts()}] ${msg}`;
+    log.appendChild(e);
+    log.scrollTop = log.scrollHeight;
+  }
+  const sys  = (m) => logLine('sys', m);
+  const tx   = (m) => logLine('tx',  '→ ' + m);
+  const rx   = (m) => logLine('rx',  '← ' + m);
+  const err  = (m) => logLine('err', '✗ ' + m);
+  const good = (m) => logLine('good','✓ ' + m);
+
+  function setStatus(msg, kind = 'info') {
+    status.className = 'status-' + kind;
+    status.textContent = msg;
+  }
+  function showInfo(text, kind = 'success') {
+    const b = $('info-box');
+    b.textContent = text;
+    b.style.display = 'block';
+    b.style.background = kind === 'success' ? 'var(--success-bg)' : 'var(--warning-bg)';
+    b.style.color = kind === 'success' ? 'var(--success-fg)' : 'var(--warning-fg)';
+  }
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  const toHex = (b) => Array.from(b || []).map(v => v.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+  function parseHex(s) {
+    const c = String(s).replace(/[^0-9a-fA-F]/g, '');
+    if (c.length % 2) throw new Error('hex string has odd length');
+    const out = new Uint8Array(c.length / 2);
+    for (let i = 0; i < out.length; i++) out[i] = parseInt(c.substr(i * 2, 2), 16);
+    return Array.from(out);
+  }
+  function u32le(n) {
+    n >>>= 0;
+    return [n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF];
+  }
+  function swName(sw) {
+    return ({
+      0x9000:'OK', 0x6A81:'no card response', 0x6985:'conditions of use not satisfied',
+      0x6D00:'INS not supported', 0x6E00:'CLA not supported', 0x6700:'wrong length',
+      0x6992:'data integrity error', 0x6A82:'file not found', 0x6401:'timeout / command failed',
+      0x6C00:'wrong Le / bad parameter'
+    })[sw] || ('0x' + sw.toString(16).toUpperCase().padStart(4, '0'));
+  }
+  function hexTag(tag) {
+    return '0x' + tag.toString(16).toUpperCase().padStart(tag > 0xFF ? 4 : 2, '0');
+  }
+
+  async function waitForAutoDetectIdle(maxMs = 5000) {
+    const start = Date.now();
+    while (autoDetectRunning && Date.now() - start < maxMs) {
+      setStatus('自動監視の通信完了待ち…', 'warning');
+      await sleep(80);
+    }
+    return !autoDetectRunning;
+  }
+
+  async function withBusy(fn) {
+    if (busy) return;
+    manualOperationPending = true;
+    const idle = await waitForAutoDetectIdle(5000);
+    if (!idle) {
+      manualOperationPending = false;
+      setStatus('自動監視が通信中です。1〜2秒後にもう一度試してください。', 'warning');
+      return;
+    }
+    busy = true;
+    enableButtons(!!device, true);
+    try { await fn(); }
+    catch (e) { err(e.stack || e.message || String(e)); setStatus('エラー: ' + (e.message || e), 'danger'); }
+    finally { busy = false; manualOperationPending = false; enableButtons(!!device, false); }
+  }
+
+  // -------------------------------------------------------------------------
+  // RC-S300 USB frame
+  // -------------------------------------------------------------------------
+  function wrap(payload) {
+    const buf = new Uint8Array(10 + payload.length);
+    buf[0] = 0x6B;
+    buf[1] = payload.length & 0xFF;
+    buf[2] = (payload.length >> 8) & 0xFF;
+    buf[3] = (payload.length >> 16) & 0xFF;
+    buf[4] = (payload.length >> 24) & 0xFF;
+    buf[5] = 0x00;
+    buf[6] = (++seq) & 0xFF;
+    buf[7] = 0x00;
+    buf[8] = 0x00;
+    buf[9] = 0x00;
+    buf.set(payload, 10);
+    return buf;
+  }
+
+  async function send(payload, label, postDelayMs = 30, inLen = 4096) {
+    if (!device) throw new Error('RC-S300 is not connected');
+    const frame = wrap(payload);
+    tx(`${label} payload[${toHex(payload)}]`);
+    const outR = await device.transferOut(cfg.epOut, frame);
+    if (outR.status !== 'ok') throw new Error(`transferOut status=${outR.status}`);
+    await sleep(postDelayMs);
+    const inR = await device.transferIn(cfg.epIn, inLen);
+    if (inR.status !== 'ok') throw new Error(`transferIn status=${inR.status}`);
+    const raw = new Uint8Array(inR.data.buffer.slice(inR.data.byteOffset, inR.data.byteOffset + inR.data.byteLength));
+    rx(`raw[${toHex(raw)}]`);
+    return raw;
+  }
+
+  function parseSonyPayload(raw) {
+    if (!raw || raw.length < 10) return null;
+    const sonyLen = raw[1] | (raw[2] << 8) | (raw[3] << 16) | (raw[4] << 24);
+    return raw.slice(10, 10 + sonyLen);
+  }
+
+  function readBerLength(bytes, i, end) {
+    if (i >= end) return null;
+    const b = bytes[i++];
+    if ((b & 0x80) === 0) return { len: b, next: i };
+    const n = b & 0x7F;
+    if (n === 0 || n > 2 || i + n > end) return null;
+    let len = 0;
+    for (let k = 0; k < n; k++) len = (len << 8) | bytes[i++];
+    return { len, next: i };
+  }
+
+  function parseTlvs(bytes, start, end) {
+    const tlvs = [];
+    let i = start;
+    while (i < end) {
+      if (i + 2 <= end && bytes[i] === 0x90 && bytes[i + 1] === 0x00) break;
+      let tag = bytes[i++];
+      if ((tag & 0x1F) === 0x1F) {
+        if (i >= end) break;
+        tag = (tag << 8) | bytes[i++];
+      }
+      const lenInfo = readBerLength(bytes, i, end);
+      if (!lenInfo) break;
+      const len = lenInfo.len;
+      i = lenInfo.next;
+      if (i + len > end) break;
+      tlvs.push({ tag, len, val: bytes.slice(i, i + len) });
+      i += len;
+    }
+    return tlvs;
+  }
+
+  function parseControlResponse(raw) {
+    const p = parseSonyPayload(raw);
+    if (!p || p.length < 2) return null;
+    const outerSW = (p[p.length - 2] << 8) | p[p.length - 1];
+    const r = { payload: p, outerSW, hasC0: false, status: null, innerSW: null, tlvs: [] };
+    if (p.length >= 7 && p[0] === 0xC0 && p[1] === 0x03) {
+      r.hasC0 = true;
+      r.status = p[2];
+      r.innerSW = (p[3] << 8) | p[4];
+      r.tlvs = parseTlvs(p, 5, p.length - 2);
+    }
+    return r;
+  }
+
+  function describeControl(raw, prefix = '  ') {
+    const r = parseControlResponse(raw);
+    if (!r) return `${prefix}parse failed`;
+    if (!r.hasC0) return `${prefix}SW=${swName(r.outerSW)} payload=[${toHex(r.payload)}]`;
+    const lines = [`${prefix}C0 status=${r.status} innerSW=${swName(r.innerSW)} outerSW=${swName(r.outerSW)}`];
+    for (const t of r.tlvs) lines.push(`${prefix}TLV ${hexTag(t.tag)} len=${t.len} val=[${toHex(t.val)}]`);
+    return lines.join('\n');
+  }
+
+  function parseDirectApduResponse(raw) {
+    const p = parseSonyPayload(raw);
+    if (!p || p.length < 2) return null;
+    const sw = (p[p.length - 2] << 8) | p[p.length - 1];
+    return { data: p.slice(0, p.length - 2), sw };
+  }
+
+  // -------------------------------------------------------------------------
+  // RC-S300 commands / CommunicateThruEX
+  // -------------------------------------------------------------------------
+  const CMD = {
+    END:       [0xFF,0x50,0x00,0x00,0x02,0x82,0x00,0x00],
+    START:     [0xFF,0x50,0x00,0x00,0x02,0x81,0x00,0x00],
+    RF_OFF:    [0xFF,0x50,0x00,0x00,0x02,0x83,0x00,0x00],
+    RF_ON:     [0xFF,0x50,0x00,0x00,0x02,0x84,0x00,0x00],
+    GET_UID:   [0xFF,0xCA,0x00,0x00],
+    FIRMWARE:  [0xFF,0x56,0x00,0x00],
+    SERIAL:    [0xFF,0x5F,0x03,0x00]
+  };
+
+  function buildSwitchProto(p1, p2, p3) {
+    return [0xFF,0x50,0x00,0x02,0x04, 0x8F,0x02, p1,p2,p3];
+  }
+
+  function buildThruEX(rfBytes, timeoutUs = 300000) {
+    if (rfBytes.length > 255) throw new Error('Raw RF frame too long for this tester header');
+    // RC-S300 CommunicateThruEX:
+    // FF 50 00 01 00 + 2-byte length + RF packet + 00 00 00
+    // RF packet header observed for RC-S300 WebUSB: 5F 46 04 + timeoutLE + 95 82 00 + LEN + RF bytes
+    const rfHeader = [0x5F,0x46,0x04, ...u32le(timeoutUs), 0x95,0x82,0x00, rfBytes.length & 0xFF];
+    const len = rfHeader.length + rfBytes.length;
+    return [0xFF,0x50,0x00,0x01,0x00, (len >> 8) & 0xFF, len & 0xFF, ...rfHeader, ...rfBytes, 0x00,0x00,0x00];
+  }
+
+  async function sendRfFrame(rfBytes, label, timeoutUs = 300000) {
+    const raw = await send(buildThruEX(rfBytes, timeoutUs), label, 35);
+    const r = parseControlResponse(raw);
+    if (!r) {
+      err('  ThruEX parse failed');
+      return null;
+    }
+    sys(describeControl(raw));
+    if (!r.hasC0 || r.outerSW !== 0x9000 || r.innerSW !== 0x9000 || r.status !== 0) {
+      return { ok:false, response:r, rfData:null };
+    }
+    const rfTlv = r.tlvs.find(t => t.tag === 0x97);
+    const rfData = rfTlv ? Array.from(rfTlv.val) : [];
+    if (rfData.length) sys(`  RF response=[${toHex(rfData)}]`);
+    return { ok:true, response:r, rfData };
+  }
+
+  // -------------------------------------------------------------------------
+  // ISO14443-4 / ISO-DEP I-Block emulation
+  // -------------------------------------------------------------------------
+  function isoInfFromIBlock(frame) {
+    const pcb = frame[0];
+    let off = 1;
+    if (pcb & 0x08) off++; // CID
+    if (pcb & 0x04) off++; // NAD
+    return frame.slice(off);
+  }
+
+  async function exchangeIsoFrame(txFrame, label, timeoutUs = 500000) {
+    let current = txFrame;
+    let currentLabel = label;
+    for (let safety = 0; safety < 10; safety++) {
+      const r = await sendRfFrame(current, currentLabel, timeoutUs);
+      if (!r || !r.rfData || r.rfData.length === 0) return null;
+      const pcb = r.rfData[0];
+      // S(WTX): echo same frame, then wait for actual response.
+      if ((pcb & 0xF7) === 0xF2) {
+        sys(`  S(WTX) received; echo [${toHex(r.rfData)}]`);
+        current = r.rfData;
+        currentLabel = 'S(WTX) echo';
+        continue;
+      }
+      return r.rfData;
+    }
+    throw new Error('S(WTX) safety counter exceeded');
+  }
+
+  async function transceiveIsoDep(apdu, label, timeoutUs = 500000) {
+    if (!activated) throw new Error('ISO-DEP is not activated. Run activation first.');
+    const INF_CHUNK = 250;
+
+    if (apdu.length <= INF_CHUNK) {
+      let txFrame = [0x02 | (isoBlockNum & 1), ...apdu];
+      for (let safety = 0; safety < 8; safety++) {
+        const rf = await exchangeIsoFrame(txFrame, `${label} I-Block BN=${isoBlockNum}`, timeoutUs);
+        if (!rf || rf.length === 0) return null;
+        const pcb = rf[0];
+        const blockType = pcb & 0xC0;
+        if (blockType === 0x80) { // R-block: resend
+          sys(`  R-block received [${toHex(rf)}]; resend I-Block`);
+          continue;
+        }
+        if (blockType === 0x00) { // I-block response
+          const data = isoInfFromIBlock(rf);
+          if (pcb & 0x10) sys('  warning: response chaining bit is set; this tester does not collect chained responses yet');
+          isoBlockNum ^= 1;
+          sys(`  ISO response INF=[${toHex(data)}] nextBN=${isoBlockNum}`);
+          return data;
+        }
+        err(`  unexpected ISO PCB=0x${pcb.toString(16).toUpperCase().padStart(2, '0')}`);
+        return null;
+      }
+      return null;
+    }
+
+    // Long APDU: split into I-Block chained frames. This is needed later for 257-byte image fragment APDUs.
+    let off = 0;
+    while (off < apdu.length) {
+      const remain = apdu.length - off;
+      const chunk = Math.min(INF_CHUNK, remain);
+      const more = (off + chunk < apdu.length);
+      let txFrame = [0x02 | (isoBlockNum & 1) | (more ? 0x10 : 0x00), ...apdu.slice(off, off + chunk)];
+      for (let safety = 0; safety < 8; safety++) {
+        const rf = await exchangeIsoFrame(txFrame, `${label} I-Block chunk off=${off} len=${chunk} BN=${isoBlockNum} more=${more}`, timeoutUs);
+        if (!rf || rf.length === 0) return null;
+        const pcb = rf[0];
+        const blockType = pcb & 0xC0;
+        if (more) {
+          if (blockType === 0x80) {
+            sys(`  R-ACK received [${toHex(rf)}]`);
+            isoBlockNum ^= 1;
+            break;
+          }
+          err(`  expected R-ACK, got PCB=0x${pcb.toString(16).toUpperCase().padStart(2, '0')}`);
+          return null;
+        }
+        if (blockType === 0x80) {
+          sys(`  R-block on final chunk [${toHex(rf)}]; resend final chunk`);
+          continue;
+        }
+        if (blockType === 0x00) {
+          const data = isoInfFromIBlock(rf);
+          isoBlockNum ^= 1;
+          sys(`  ISO final response INF=[${toHex(data)}] nextBN=${isoBlockNum}`);
+          return data;
+        }
+        err(`  unexpected final ISO PCB=0x${pcb.toString(16).toUpperCase().padStart(2, '0')}`);
+        return null;
+      }
+      off += chunk;
+    }
+    return null;
+  }
+
+  function parseApduSW(data) {
+    if (!data || data.length < 2) return { body: [], sw: 0 };
+    return { body: data.slice(0, -2), sw: (data[data.length - 2] << 8) | data[data.length - 1] };
+  }
+
+  // -------------------------------------------------------------------------
+  // ezsign high-level sequence
+  // -------------------------------------------------------------------------
+  async function rfCycle(longWait = true) {
+    sys('-- RF cycle --');
+    activated = false;
+    authenticated = false;
+    isoBlockNum = 0;
+    await send(CMD.END, 'End');
+    await sleep(80);
+    await send(CMD.RF_OFF, 'RF Off');
+    await sleep(longWait ? 800 : 250);
+    await send(CMD.START, 'Start');
+    await sleep(80);
+    await send(CMD.RF_ON, 'RF On');
+    await sleep(longWait ? 600 : 250);
+  }
+
+  async function switchProtocolFull() {
+    sys('=== Activate Type A full: SwitchProtocol 00 04 00 ===');
+    await rfCycle(true);
+    const raw = await send(buildSwitchProto(0x00,0x04,0x00), 'SwitchProtocol TypeA full 00 04 00');
+    sys(describeControl(raw));
+    const r = parseControlResponse(raw);
+    const ok = !!(r && r.hasC0 && r.status === 0 && r.innerSW === 0x9000 && r.outerSW === 0x9000);
+    if (!ok) throw new Error('SwitchProtocol 00 04 00 failed');
+    const atr = r.tlvs.find(t => t.tag === 0x5F51);
+    if (atr) good(`ATR/ATS-like TLV 5F51 detected: ${toHex(atr.val)}`);
+    activated = true;
+    authenticated = false;
+    isoBlockNum = 0;
+    setStatus('ISO-DEP active: full 00 04 00', 'success');
+    return true;
+  }
+
+  async function switchProtocolBasicAndRats() {
+    sys('=== Activate Type A basic: SwitchProtocol 00 03 00 + manual RATS ===');
+    await rfCycle(true);
+    const raw = await send(buildSwitchProto(0x00,0x03,0x00), 'SwitchProtocol TypeA basic 00 03 00');
+    sys(describeControl(raw));
+    const r = parseControlResponse(raw);
+    const ok = !!(r && r.hasC0 && r.status === 0 && r.innerSW === 0x9000 && r.outerSW === 0x9000);
+    if (!ok) throw new Error('SwitchProtocol 00 03 00 failed');
+    await sleep(100);
+    const rats = await sendRfFrame([0xE0, 0x80], 'Manual RATS E0 80', 300000);
+    if (!rats || !rats.ok || !rats.rfData || rats.rfData.length === 0) throw new Error('RATS failed');
+    good(`ATS received: ${toHex(rats.rfData)}`);
+    activated = true;
+    authenticated = false;
+    isoBlockNum = 0;
+    setStatus('ISO-DEP active: basic + manual RATS', 'success');
+    return true;
+  }
+
+  async function authenticateEzsign() {
+    sys('=== ezsign AUTH via ISO-DEP I-Block ===');
+    const auth = [0x00,0x20,0x00,0x01,0x04, 0x20,0x09,0x12,0x10];
+    const data = await transceiveIsoDep(auth, 'AUTH');
+    const { sw } = parseApduSW(data);
+    sys(`  AUTH SW=${swName(sw)}`);
+    authenticated = (sw === 0x9000);
+    if (authenticated) {
+      good('★★★ AUTH 成功 ★★★');
+      setStatus('AUTH 成功', 'success');
+    } else {
+      err(`AUTH failed: ${swName(sw)}`);
+      setStatus(`AUTH failed: ${swName(sw)}`, 'danger');
+    }
+    return authenticated;
+  }
+
+  function parseDeviceInfoTlv(body) {
+    const tlvs = parseTlvs(body, 0, body.length);
+    const info = { tlvs };
+    for (const t of tlvs) {
+      const v = Array.from(t.val);
+      if (t.tag === 0xA0 && v.length >= 7) {
+        const numColorsByte = v[1];
+        const bpp = (numColorsByte === 0x07) ? 2 : 1;
+        info.numColors = (numColorsByte === 0x07) ? 4 : 2;
+        info.bitsPerPixel = bpp;
+        const heightBits = (v[3] << 8) | v[4];
+        info.height = Math.floor(heightBits / bpp);
+        info.width = (v[5] << 8) | v[6];
+      } else if (t.tag === 0xA1 && v.length >= 1) {
+        info.orientation = v[0];
+      } else if (t.tag === 0xC0) {
+        info.name = new TextDecoder('ascii').decode(Uint8Array.from(t.val)).replace(/\0+$/g, '');
+      } else if (t.tag === 0xC1 && v.length >= 4) {
+        info.uid = toHex(v);
+      }
+    }
+    return info;
+  }
+
+  async function getInfoEzsign() {
+    sys('=== ezsign GET INFO via ISO-DEP I-Block ===');
+    const apdu = [0x00,0xD1,0x00,0x00,0x00];
+    const data = await transceiveIsoDep(apdu, 'GET INFO');
+    const { body, sw } = parseApduSW(data);
+    sys(`  GET INFO SW=${swName(sw)} body=[${toHex(body)}]`);
+    if (sw !== 0x9000) {
+      err(`GET INFO failed: ${swName(sw)}`);
+      return null;
+    }
+    const info = parseDeviceInfoTlv(body);
+    for (const t of info.tlvs) sys(`  ezsign TLV ${hexTag(t.tag)} len=${t.len} val=[${toHex(t.val)}]`);
+    const text = [
+      'GET INFO 成功',
+      info.name ? `name: ${info.name}` : null,
+      info.width && info.height ? `size: ${info.width} x ${info.height}` : null,
+      info.numColors ? `colors: ${info.numColors} / bpp=${info.bitsPerPixel}` : null,
+      info.uid ? `uid: ${info.uid}` : null,
+      info.orientation !== undefined ? `orientation: ${info.orientation}` : null
+    ].filter(Boolean).join('\n');
+    good(text);
+    updateDeviceColorNote();
+    showInfo(text);
+    return info;
+  }
+
+  async function autoDiagnostic() {
+    sys('============================================================');
+    sys('AUTO DIAG START');
+    sys('Try #1: SwitchProtocol 00 04 00 + I-Block APDU');
+    try {
+      await switchProtocolFull();
+      if (await authenticateEzsign()) {
+        await getInfoEzsign();
+        sys('AUTO DIAG DONE: full activation worked');
+        return;
+      }
+    } catch (e) {
+      err('Try #1 failed: ' + (e.message || e));
+    }
+
+    sys('Try #2: SwitchProtocol 00 03 00 + manual RATS + I-Block APDU');
+    try {
+      await switchProtocolBasicAndRats();
+      if (await authenticateEzsign()) {
+        await getInfoEzsign();
+        sys('AUTO DIAG DONE: basic + RATS worked');
+        return;
+      }
+    } catch (e) {
+      err('Try #2 failed: ' + (e.message || e));
+    }
+
+    setStatus('AUTHまで到達できませんでした。ログの RF response / SW を確認してください。', 'danger');
+    showInfo('失敗しました。特に以下を見てください:\n- ThruEX が C0 status=0 / innerSW=OK か\n- RF response が返っているか\n- AUTH の ISO response INF が 90 00 以外か', 'warning');
+  }
+
+
+
+  // -------------------------------------------------------------------------
+  // Image upload writer / 4-color dithering
+  // -------------------------------------------------------------------------
+  const TARGETS = {
+    '400x300': { width: 400, height: 300, label: '4.2inch 400x300' },
+    '296x128': { width: 296, height: 128, label: '2.9inch 296x128' },
+    '128x296': { width: 128, height: 296, label: '2.9inch 128x296' }
+  };
+
+  const PALETTE = [
+    { idx: 0, name: 'black',  r: 0,   g: 0,   b: 0   },
+    { idx: 1, name: 'white',  r: 255, g: 255, b: 255 },
+    { idx: 2, name: 'yellow', r: 245, g: 205, b: 0   },
+    { idx: 3, name: 'red',    r: 220, g: 0,   b: 0   }
+  ];
+
+  const KERNELS = {
+    floyd: {
+      label: 'Floyd-Steinberg', div: 16,
+      taps: [[1,0,7],[-1,1,3],[0,1,5],[1,1,1]]
+    },
+    atkinson: {
+      label: 'Atkinson', div: 8,
+      taps: [[1,0,1],[2,0,1],[-1,1,1],[0,1,1],[1,1,1],[0,2,1]]
+    },
+    jjn: {
+      label: 'Jarvis, Judice, and Ninke', div: 48,
+      taps: [[1,0,7],[2,0,5],[-2,1,3],[-1,1,5],[0,1,7],[1,1,5],[2,1,3],[-2,2,1],[-1,2,3],[0,2,5],[1,2,3],[2,2,1]]
+    },
+    stucki: {
+      label: 'Stucki', div: 42,
+      taps: [[1,0,8],[2,0,4],[-2,1,2],[-1,1,4],[0,1,8],[1,1,4],[2,1,2],[-2,2,1],[-1,2,2],[0,2,4],[1,2,2],[2,2,1]]
+    },
+    burkes: {
+      label: 'Burkes', div: 32,
+      taps: [[1,0,8],[2,0,4],[-2,1,2],[-1,1,4],[0,1,8],[1,1,4],[2,1,2]]
+    },
+    sierra3: {
+      label: 'Sierra3', div: 32,
+      taps: [[1,0,5],[2,0,3],[-2,1,2],[-1,1,4],[0,1,5],[1,1,4],[2,1,2],[-1,2,2],[0,2,3],[1,2,2]]
+    },
+    sierra2: {
+      label: 'Sierra2', div: 16,
+      taps: [[1,0,4],[2,0,3],[-2,1,1],[-1,1,2],[0,1,3],[1,1,2],[2,1,1]]
+    },
+    'sierra-lite': {
+      label: 'Sierra Lite', div: 4,
+      taps: [[1,0,2],[-1,1,1],[0,1,1]]
+    }
+  };
+
+
+  const ALGO_DESCRIPTIONS = {
+    floyd: '<strong>Floyd-Steinberg:</strong> 最も標準的。誤差を100%拡散し、元の画像の明るさを忠実に再現します。写真にも文字にも使いやすい基準の方式です。',
+    atkinson: '<strong>Atkinson:</strong> 誤差を75%だけ拡散。輪郭がくっきりし、コントラストが高く保たれるシャープな仕上がりになります。文字やアイコン寄りに向きます。',
+    jjn: '<strong>Jarvis, Judice, and Ninke (JJN):</strong> より広い範囲（2ピクセル先まで）に細かく拡散。非常に滑らかですが、少しぼやけた柔らかい印象になります。写真寄りです。',
+    stucki: '<strong>Stucki:</strong> JJN法をベースに振り分けの割合を調整し、計算を軽くしつつシャープさを向上させた手法です。滑らかさと輪郭のバランスが良いです。',
+    burkes: '<strong>Burkes:</strong> Stucki法やJJN法に似ていますが、拡散範囲を少し狭めて計算量を抑えたバランス型です。処理速度と画質の妥協点として扱いやすいです。',
+    sierra3: '<strong>Sierra3:</strong> JJN法などをさらに最適化した3段拡散です。写真の階調が比較的なめらかで、粒状感も抑えやすい方式です。',
+    sierra2: '<strong>Sierra2:</strong> Sierra3より軽い2段拡散です。滑らかさを保ちつつ処理を少し軽くしたい場合に向きます。',
+    'sierra-lite': '<strong>Sierra Lite:</strong> Sierra系の軽量版です。処理が軽く、輪郭も比較的崩れにくいので、ezsignのような低色数e-paperでは最初に試す方式としておすすめです。'
+  };
+
+  let loadedImage = null;
+  let processedImage = null;
+  let lastDeviceInfo = null;
+  let cropPanX = 0;
+  let cropPanY = 0;
+  let autoDetectTimer = null;
+  let autoDetectRunning = false;
+  let manualOperationPending = false;
+  let lastAutoDetectQuietLogAt = 0;
+  let quietLogDepth = 0;
+  let autoDetectSuspendUntil = 0;
+  let autoDetectSuspendReason = '';
+  let lastAutoDetectSuspendLogAt = 0;
+
+  let progressVisual = 0;
+  let progressAnim = 0;
+  function setProgress(pct, immediate = false) {
+    const el = $('progress-bar');
+    if (!el) return;
+    const target = Math.max(0, Math.min(100, pct));
+    if (immediate) {
+      progressVisual = target;
+      el.style.width = target + '%';
+      return;
+    }
+    const start = progressVisual;
+    const delta = target - start;
+    if (Math.abs(delta) < 0.2) {
+      progressVisual = target;
+      el.style.width = target + '%';
+      return;
+    }
+    if (progressAnim) cancelAnimationFrame(progressAnim);
+    const startTs = performance.now();
+    const duration = 180;
+    const step = (ts) => {
+      const t = Math.min(1, (ts - startTs) / duration);
+      const eased = 1 - Math.pow(1 - t, 2);
+      progressVisual = start + delta * eased;
+      el.style.width = progressVisual + '%';
+      if (t < 1) progressAnim = requestAnimationFrame(step);
+    };
+    progressAnim = requestAnimationFrame(step);
+  }
+
+  function setProgressStage(text) {
+    const el = $('progress-stage');
+    if (el) el.textContent = text || '待機中';
+  }
+
+  function getRefreshPollTimeoutSec() {
+    const el = $('refresh-poll-timeout-sec');
+    return Math.max(30, Math.min(300, parseInt((el || {}).value || '120', 10) || 120));
+  }
+
+  function isRefreshPollEnabled() {
+    const el = $('chk-refresh-poll');
+    return !el || el.checked;
+  }
+
+  function suspendAutoDetect(ms, reason = 'e-paper更新中') {
+    if (!ms || ms <= 0) return;
+    const until = Date.now() + ms;
+    if (until > autoDetectSuspendUntil) {
+      autoDetectSuspendUntil = until;
+      autoDetectSuspendReason = reason;
+      const sec = Math.ceil(ms / 1000);
+      setProgressStage(`自動監視待機中: ${reason}`);
+      if (!isMinPollLogEnabled()) sys(`AUTO DEVICE WATCH: suspend ${sec}s (${reason})`);
+    }
+  }
+
+  function remainingAutoDetectSuspendMs() {
+    return Math.max(0, autoDetectSuspendUntil - Date.now());
+  }
+
+  function getInputMode() {
+    return $('source-mode') ? $('source-mode').value : 'image';
+  }
+
+  function makeRgbaFromIndices(indices, width, height) {
+    const outRGBA = new Uint8ClampedArray(width * height * 4);
+    for (let i = 0; i < indices.length; i++) {
+      const p = PALETTE[indices[i]] || PALETTE[1];
+      const j = i * 4;
+      outRGBA[j] = p.r; outRGBA[j + 1] = p.g; outRGBA[j + 2] = p.b; outRGBA[j + 3] = 255;
+    }
+    return outRGBA;
+  }
+
+  function buildColorCheckPattern(width, height, variant = 'colorcheck-bars') {
+    const idx = new Uint8Array(width * height);
+    const q1 = Math.floor(width / 4), q2 = Math.floor(width / 2), q3 = Math.floor(width * 3 / 4);
+    const topH = Math.floor(height * 0.68);
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let v = 1;
+        if (variant === 'colorcheck-grid') {
+          const cellW = Math.max(8, Math.floor(width / 8));
+          const cellH = Math.max(8, Math.floor(height / 6));
+          const cx = Math.floor(x / cellW), cy = Math.floor(y / cellH);
+          const m = (cx + cy) % 4;
+          v = [1, 0, 2, 3][m];
+        } else if (variant === 'colorcheck-raw') {
+          // RAW値を左から 0 / 1 / 2 / 3 の順に送る診断用。色マップは適用しません。
+          if (x < q1) v = 0; else if (x < q2) v = 1; else if (x < q3) v = 2; else v = 3;
+          if (y >= topH) {
+            const band = Math.floor((y - topH) / Math.max(1, Math.floor((height - topH) / 4)));
+            if (band === 0) v = (x % 16 < 8) ? 0 : 1;
+            else if (band === 1) v = (x % 16 < 8) ? 2 : 3;
+            else if (band === 2) v = (x % 32 < 8) ? 0 : ((x % 32 < 16) ? 1 : ((x % 32 < 24) ? 2 : 3));
+            else v = ((Math.floor(x / 8) + Math.floor((y - topH) / 8)) % 4);
+          }
+        } else {
+          if (y < topH) {
+            if (x < q1) v = 1; else if (x < q2) v = 0; else if (x < q3) v = 2; else v = 3;
+          } else {
+            const band = Math.floor((y - topH) / Math.max(1, Math.floor((height - topH) / 4)));
+            if (band === 0) v = (x % 16 < 8) ? 2 : 3;
+            else if (band === 1) v = (x % 16 < 8) ? 1 : 0;
+            else if (band === 2) v = (x % 32 < 8) ? 2 : ((x % 32 < 16) ? 1 : ((x % 32 < 24) ? 3 : 0));
+            else v = ((Math.floor(x / 8) + Math.floor((y - topH) / 8)) % 4);
+          }
+        }
+        idx[y * width + x] = v;
+      }
+    }
+    return idx;
+  }
+
+  function buildColorCheckBaseResult(width, height, variant = 'colorcheck-bars') {
+    const indices = buildColorCheckPattern(width, height, variant);
+    const outRGBA = makeRgbaFromIndices(indices, width, height);
+    const label = variant === 'colorcheck-grid' ? 'Color Check Grid' : (variant === 'colorcheck-raw' ? 'Color Check RAW 0/1/2/3' : 'Color Check Bars');
+    return { width, height, indices, outRGBA, algo: label };
+  }
+
+  function getColorMap() {
+    const key = $('color-map') ? $('color-map').value : 'standard';
+    if (key === 'swap01') return [1, 0, 2, 3];
+    if (key === 'swap23') return [0, 1, 3, 2];
+    if (key === 'invert_pairs') return [1, 0, 3, 2];
+    return [0, 1, 2, 3];
+  }
+
+  function mapIndicesForDevice(indices, sourceMode) {
+    // RAWチェックは 0/1/2/3 をそのまま送る。通常画像と論理4色チェックでは色マップを適用する。
+    if (sourceMode === 'colorcheck-raw') return indices;
+    const map = getColorMap();
+    if (map[0] === 0 && map[1] === 1 && map[2] === 2 && map[3] === 3) return indices;
+    const out = new Uint8Array(indices.length);
+    for (let i = 0; i < indices.length; i++) out[i] = map[indices[i] & 0x03] & 0x03;
+    return out;
+  }
+
+  function colorMapNote(sourceMode) {
+    if (sourceMode === 'colorcheck-raw') return 'RAW送信（色マップなし）';
+    const sel = $('color-map');
+    return sel ? sel.options[sel.selectedIndex].textContent : '色マップ: 標準';
+  }
+
+  function getManualTargetValue() {
+    return $('target-size').value;
+  }
+
+  function getPreviewTarget() {
+    const v = getManualTargetValue();
+    if (lastDeviceInfo && lastDeviceInfo.width && lastDeviceInfo.height) {
+      const actualKey = `${lastDeviceInfo.width}x${lastDeviceInfo.height}`;
+      // 2.9inchの一部個体はGET INFO上は 128x296 と返りますが、物理表示は横長 296x128 として扱います。
+      // ただし送信バッファは実機の内部向き 128x296 のまま使います。
+      if ((v === 'auto' || v === '296x128') && actualKey === '128x296' && TARGETS['128x296']) return TARGETS['128x296'];
+      if (v !== 'auto' && TARGETS[v]) return TARGETS[v];
+      if (TARGETS[actualKey]) return TARGETS[actualKey];
+    }
+    if (v !== 'auto') return TARGETS[v];
+    return TARGETS['400x300'];
+  }
+
+  function targetFromInfo(info) {
+    if (!info || !info.width || !info.height) return null;
+    const key = `${info.width}x${info.height}`;
+    return TARGETS[key] || null;
+  }
+
+  function getOrientationSetting(target) {
+    const key = `${target.width}x${target.height}`;
+    const mode = $('orientation-mode') ? $('orientation-mode').value : 'auto';
+    if (mode === 'none') return { rotate: 0, flipH: false, mode, note: '補正なし' };
+    if (mode === 'manual') {
+      const rotate = parseInt($('manual-rotate').value, 10) || 0;
+      const flipH = !!$('manual-flip-h').checked;
+      return { rotate, flipH, mode, note: `manual rotate=${rotate} flipH=${flipH ? 1 : 0}` };
+    }
+    if (key === '400x300') return { rotate: 0, flipH: true, mode, note: 'Auto: 4.2inch 左右反転補正' };
+    if (key === '296x128') return { rotate: 0, flipH: true, mode, note: 'Auto: 2.9inch 横表示（左右反転補正）' };
+    if (key === '128x296') return { rotate: 270, flipH: true, mode, note: 'Auto: 2.9inch 横表示（内部128x296へ送信用回転・左右反転補正）' };
+    return { rotate: 0, flipH: false, mode, note: 'Auto: unknown target 補正なし' };
+  }
+
+  function getBaseTargetForOrientation(target, orient) {
+    const rot = ((orient.rotate % 360) + 360) % 360;
+    if (rot === 90 || rot === 270) return { width: target.height, height: target.width, label: `${target.height}x${target.width} source-before-rotate` };
+    return { width: target.width, height: target.height, label: target.label };
+  }
+
+  function getCropBackgroundFill() {
+    const v = $('crop-bg-fill') ? $('crop-bg-fill').value : 'none';
+    switch (v) {
+      case 'white': return '#ffffff';
+      case 'black': return '#000000';
+      case 'yellow': return 'rgb(255, 210, 0)';
+      case 'red': return 'rgb(220, 0, 0)';
+      default: return null;
+    }
+  }
+
+  function drawCroppedImageToCanvas(img, canvas, target, scalePercent = 100) {
+    canvas.width = target.width;
+    canvas.height = target.height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.clearRect(0, 0, target.width, target.height);
+    const fill = getCropBackgroundFill();
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fillRect(0, 0, target.width, target.height);
+    }
+
+    const iw = img.naturalWidth || img.width;
+    const ih = img.naturalHeight || img.height;
+    const baseScale = Math.max(target.width / iw, target.height / ih);
+    const zoom = Math.max(0.1, (parseInt(scalePercent, 10) || 100) / 100);
+    const scale = baseScale * zoom;
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = (target.width - dw) / 2 + cropPanX;
+    const dy = (target.height - dh) / 2 + cropPanY;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, dx, dy, dw, dh);
+  }
+
+  function transformDitherResultToDevice(result, sourceWidth, sourceHeight, target, orient) {
+    const rot = ((orient.rotate % 360) + 360) % 360;
+    const outW = target.width;
+    const outH = target.height;
+    const outIdx = new Uint8Array(outW * outH);
+    const src = result.indices;
+
+    function sourceForDest(x, y) {
+      let sx, sy;
+      if (rot === 0) {
+        sx = x; sy = y;
+      } else if (rot === 90) { // source portrait -> device landscape, clockwise
+        sx = y;
+        sy = sourceHeight - 1 - x;
+      } else if (rot === 270) { // counter-clockwise
+        sx = sourceWidth - 1 - y;
+        sy = x;
+      } else if (rot === 180) {
+        sx = sourceWidth - 1 - x;
+        sy = sourceHeight - 1 - y;
+      } else {
+        sx = x; sy = y;
+      }
+      if (orient.flipH) sx = sourceWidth - 1 - sx;
+      return [sx, sy];
+    }
+
+    for (let y = 0; y < outH; y++) {
+      for (let x = 0; x < outW; x++) {
+        const [sx, sy] = sourceForDest(x, y);
+        let v = 1; // default white for out of bounds
+        if (sx >= 0 && sx < sourceWidth && sy >= 0 && sy < sourceHeight) v = src[sy * sourceWidth + sx];
+        outIdx[y * outW + x] = v;
+      }
+    }
+
+    const outRGBA = new Uint8ClampedArray(outW * outH * 4);
+    for (let i = 0; i < outIdx.length; i++) {
+      const p = PALETTE[outIdx[i]] || PALETTE[1];
+      const j = i * 4;
+      outRGBA[j] = p.r; outRGBA[j + 1] = p.g; outRGBA[j + 2] = p.b; outRGBA[j + 3] = 255;
+    }
+    return { width: outW, height: outH, indices: outIdx, outRGBA, algo: result.algo, orientNote: orient.note, sourceWidth, sourceHeight };
+  }
+
+
+  function summarizePaletteCounts(indices) {
+    const counts = { black: 0, white: 0, yellow: 0, red: 0 };
+    for (let i = 0; i < indices.length; i++) {
+      const v = indices[i];
+      if (v === 0) counts.black++;
+      else if (v === 1) counts.white++;
+      else if (v === 2) counts.yellow++;
+      else if (v === 3) counts.red++;
+    }
+    return counts;
+  }
+
+  function formatPaletteCounts(counts) {
+    return `B:${counts.black} W:${counts.white} Y:${counts.yellow} R:${counts.red}`;
+  }
+
+  function updateDeviceColorNote() {
+    const el = $('device-color-note');
+    if (!el) return;
+    if (!lastDeviceInfo || !lastDeviceInfo.numColors) {
+      el.textContent = '実機色数: 未確認';
+      return;
+    }
+    const text = `実機色数: ${lastDeviceInfo.numColors}色 / bpp=${lastDeviceInfo.bitsPerPixel}`;
+    if (lastDeviceInfo.numColors < 4) {
+      el.innerHTML = `<span class="danger-text">${text} - この実機はGET INFO上で2色パネルとして認識されています。赤/黄は白黒表示になります。</span>`;
+    } else {
+      el.textContent = text + ' - 4色パネルとして認識されています。';
+    }
+  }
+
+  function cloneOrientationForPreview(orient) {
+    // プレビューでは左右反転を見せない。送信データ側だけ flipH を使います。
+    return { ...orient, flipH: false, note: orient.note + ' / preview flipH=off' };
+  }
+
+  function drawPreviewResult(baseResult, baseTarget, target, orient, canvas) {
+    const previewOrient = cloneOrientationForPreview(orient);
+    const previewResult = transformDitherResultToDevice(baseResult, baseTarget.width, baseTarget.height, target, previewOrient);
+    const ctx = canvas.getContext('2d');
+
+    // 内部128x296の2.9inchは、画面上では横長296x128として確認したいのでbaseResultを表示します。
+    // それ以外も、左右反転は見せない previewResult を表示します。
+    if (target.width !== baseTarget.width || target.height !== baseTarget.height) {
+      canvas.width = baseTarget.width;
+      canvas.height = baseTarget.height;
+      ctx.putImageData(new ImageData(baseResult.outRGBA, baseTarget.width, baseTarget.height), 0, 0);
+    } else {
+      canvas.width = target.width;
+      canvas.height = target.height;
+      ctx.putImageData(new ImageData(previewResult.outRGBA, target.width, target.height), 0, 0);
+    }
+    return previewResult;
+  }
+
+  function nearestPaletteIndex(r, g, b) {
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const sat = max - min;
+    // 色が飛びやすい画像向けに少し色優先のヒューリスティックを入れる。
+    if (r > 170 && g > 120 && b < 150 && sat > 35) return 2; // yellow/orange -> yellow
+    if (r > 150 && g < 170 && b < 150 && (r - g) > 20 && sat > 35) return 3; // red/pink/orange-red -> red
+
+    let best = 0;
+    let bestDist = Infinity;
+    for (const p of PALETTE) {
+      const dr = r - p.r, dg = g - p.g, db = b - p.b;
+      const d = dr * dr * 0.26 + dg * dg * 0.55 + db * db * 0.19;
+      if (d < bestDist) { bestDist = d; best = p.idx; }
+    }
+    return best;
+  }
+
+  function clamp255(v) {
+    return v < 0 ? 0 : (v > 255 ? 255 : v);
+  }
+
+  function ditherImageData(imageData, algoKey, brightness) {
+    const w = imageData.width, h = imageData.height;
+    const src = imageData.data;
+    const buf = new Float32Array(w * h * 3);
+    const indices = new Uint8Array(w * h);
+    const outRGBA = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0, j = 0; i < src.length; i += 4, j += 3) {
+      // transparent pixels are treated as white.
+      const a = src[i + 3] / 255;
+      buf[j]     = clamp255(src[i] * a + 255 * (1 - a) + brightness);
+      buf[j + 1] = clamp255(src[i + 1] * a + 255 * (1 - a) + brightness);
+      buf[j + 2] = clamp255(src[i + 2] * a + 255 * (1 - a) + brightness);
+    }
+
+    const kernel = KERNELS[algoKey] || KERNELS['sierra-lite'];
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const pi = y * w + x;
+        const bi = pi * 3;
+        const oldR = clamp255(buf[bi]);
+        const oldG = clamp255(buf[bi + 1]);
+        const oldB = clamp255(buf[bi + 2]);
+        const idx = nearestPaletteIndex(oldR, oldG, oldB);
+        const p = PALETTE[idx];
+        indices[pi] = idx;
+        const oi = pi * 4;
+        outRGBA[oi] = p.r; outRGBA[oi + 1] = p.g; outRGBA[oi + 2] = p.b; outRGBA[oi + 3] = 255;
+        const er = oldR - p.r, eg = oldG - p.g, eb = oldB - p.b;
+        for (const [dx, dy, weight] of kernel.taps) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+          const ni = (ny * w + nx) * 3;
+          const f = weight / kernel.div;
+          buf[ni]     += er * f;
+          buf[ni + 1] += eg * f;
+          buf[ni + 2] += eb * f;
+        }
+      }
+    }
+    return { width: w, height: h, indices, outRGBA, algo: kernel.label };
+  }
+
+  function renderProcessedPreview() {
+    const sourceMode = getInputMode();
+    const target = getPreviewTarget();
+    const orient = getOrientationSetting(target);
+    const baseTarget = getBaseTargetForOrientation(target, orient);
+    const scalePercent = parseInt($('image-scale').value, 10) || 100;
+    const srcCanvas = $('canvas-source');
+    const outCanvas = $('canvas-dither');
+    let baseResult;
+
+    setProgressStage('プレビュー生成');
+
+    if (sourceMode === 'image') {
+      if (!loadedImage) {
+        setStatus('画像を先に選択してください。', 'warning');
+        return null;
+      }
+      drawCroppedImageToCanvas(loadedImage, srcCanvas, baseTarget, scalePercent);
+      const ctx = srcCanvas.getContext('2d', { willReadFrequently: true });
+      const imgData = ctx.getImageData(0, 0, baseTarget.width, baseTarget.height);
+      const algoKey = $('dither-algo').value;
+      const brightness = parseInt($('brightness').value, 10) || 0;
+      baseResult = ditherImageData(imgData, algoKey, brightness);
+    } else {
+      cropPanX = 0; cropPanY = 0;
+      baseResult = buildColorCheckBaseResult(baseTarget.width, baseTarget.height, sourceMode);
+      srcCanvas.width = baseTarget.width;
+      srcCanvas.height = baseTarget.height;
+      srcCanvas.getContext('2d').putImageData(new ImageData(baseResult.outRGBA, baseTarget.width, baseTarget.height), 0, 0);
+    }
+
+    const result = transformDitherResultToDevice(baseResult, baseTarget.width, baseTarget.height, target, orient);
+    drawPreviewResult(baseResult, baseTarget, target, orient, outCanvas);
+    processedImage = result;
+    const counts = summarizePaletteCounts(result.indices);
+    const rawBytes = target.width * target.height / 4;
+    const blocks = Math.ceil(rawBytes / 2000);
+    $('process-note').innerHTML = `preview/display: <strong>${baseTarget.width} x ${baseTarget.height}</strong> / send-buffer: <strong>${target.width} x ${target.height}</strong> / ${result.algo} / scale=${scalePercent}% / ${result.orientNote} / raw=${rawBytes} bytes / blocks=${blocks} / colors=${formatPaletteCounts(counts)}<br><span class="note">左がトリミング後の入力画像、右が4色変換後の表示プレビューです。左右反転は送信時のみ適用する仕様なので、プレビューには出ません。2.9inch は横表示の 296x128 で表示しています。</span>`;
+    $('btn-upload-image').disabled = !device;
+    updateDeviceColorNote();
+    setStatus(sourceMode === 'image' ? 'プレビュー生成完了。画像をezsignにアップロードできます。' : 'カラーチェックプレビュー生成完了。ezsignにアップロードできます。', 'success');
+    setProgress(0, true);
+    setProgressStage('待機中');
+    return result;
+  }
+
+  async function loadImageFile(file) {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      loadedImage = img;
+      setStatus(`画像読み込み完了: ${img.naturalWidth} x ${img.naturalHeight}`, 'success');
+      renderProcessedPreview();
+      setProgressStage('待機中');
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      setStatus('画像読み込みに失敗しました。', 'danger');
+    };
+    img.src = url;
+  }
+
+  function packIndices4Color(indices, width, height) {
+    if (width % 4 !== 0) throw new Error('width must be divisible by 4 for 2bpp packing');
+    const bytesPerRow = width / 4;
+    const out = new Uint8Array(bytesPerRow * height);
+    let oi = 0;
+    for (let y = 0; y < height; y++) {
+      const row = y * width;
+      for (let x = 0; x < width; x += 4) {
+        const p3 = indices[row + x] & 0x03;
+        const p2 = indices[row + x + 1] & 0x03;
+        const p1 = indices[row + x + 2] & 0x03;
+        const p0 = indices[row + x + 3] & 0x03;
+        out[oi++] = p0 | (p1 << 2) | (p2 << 4) | (p3 << 6);
+      }
+    }
+    return out;
+  }
+
+  function lzoLiteralCompress(raw) {
+    // LZO1X-compatible literal-only stream.
+    // This intentionally avoids external libraries and works fully offline in a local HTML file.
+    const n = raw.length;
+    const out = [];
+    if (n <= 238) {
+      out.push(n + 17);
+    } else {
+      out.push(0x00);
+      let rem = n - 18;
+      while (rem > 255) { out.push(0x00); rem -= 255; }
+      out.push(rem & 0xFF);
+    }
+    for (let i = 0; i < n; i++) out.push(raw[i]);
+    out.push(0x11, 0x00, 0x00); // end marker
+    return out;
+  }
+
+  function splitPackedIntoCompressedBlocks(packed) {
+    const blocks = [];
+    for (let off = 0; off < packed.length; off += 2000) {
+      const rawBlock = packed.slice(off, Math.min(off + 2000, packed.length));
+      const comp = lzoLiteralCompress(rawBlock);
+      blocks.push(comp);
+    }
+    return blocks;
+  }
+
+  async function prepareForWrite() {
+    await switchProtocolBasicAndRats();
+    const ok = await authenticateEzsign();
+    if (!ok) throw new Error('AUTH failed. 書き込みを中止します。');
+    const info = await getInfoEzsign();
+    lastDeviceInfo = info;
+    if (!info || !info.width || !info.height) throw new Error('GET INFO failed. size が取得できません。');
+    if (info.numColors !== 4 || info.bitsPerPixel !== 2) {
+      throw new Error(`4色/2bppではない可能性があります: colors=${info.numColors} bpp=${info.bitsPerPixel}`);
+    }
+    return info;
+  }
+
+  function deviceInfoSignature(info) {
+    if (!info) return '';
+    return [
+      info.uidHex || '',
+      info.name || '',
+      info.width || '',
+      info.height || '',
+      info.numColors || '',
+      info.bitsPerPixel || ''
+    ].join('|');
+  }
+
+  async function detectDeviceAndApply(options = {}) {
+    const isAuto = !!options.auto;
+    const beforeSig = deviceInfoSignature(lastDeviceInfo);
+    if (!isAuto) {
+      sys('============================================================');
+      sys('DEVICE DETECT / RE-DETECT START');
+      setStatus('デバイス判定中: RATS / AUTH / GET INFO', 'warning');
+    } else {
+      const now = Date.now();
+      if (!beforeSig || now - lastAutoDetectQuietLogAt > 30000) {
+        sys(beforeSig ? 'AUTO DEVICE WATCH: polling GET INFO' : 'AUTO DEVICE WATCH: waiting initial tag');
+        lastAutoDetectQuietLogAt = now;
+      }
+      setStatus(beforeSig ? 'デバイス交換を自動監視中...' : 'ezsignを乗せると自動判定します。', 'info');
+    }
+
+    // 交換後の個体でも確実に取り直すため、ISO-DEP状態は毎回作り直します。
+    activated = false;
+    authenticated = false;
+    const info = await prepareForWrite();
+    const actualTarget = targetFromInfo(info);
+    if (!actualTarget) throw new Error(`未対応サイズです: ${info.width}x${info.height}`);
+
+    const afterSig = deviceInfoSignature(info);
+    const firstDetect = !beforeSig;
+    const changed = !!beforeSig && beforeSig !== afterSig;
+    lastDeviceInfo = info;
+
+    if ($('target-size')) {
+      const actualKey = `${actualTarget.width}x${actualTarget.height}`;
+      // 2.9inchが内部向き 128x296 として返る場合でも、UI上は横表示の 296x128 に切り替えます。
+      $('target-size').value = (actualKey === '128x296') ? '296x128' : actualKey;
+    }
+
+    if (!isAuto || firstDetect || changed) {
+      showInfo([
+        changed ? (isAuto ? '自動デバイス交換検出 成功' : 'デバイス再判定 成功（交換を検出）') : 'デバイス判定 成功',
+        `name: ${info.name || '(unknown)'}`,
+        `internal size: ${actualTarget.width} x ${actualTarget.height}`,
+        `display size: ${actualTarget.width === 128 && actualTarget.height === 296 ? '296 x 128' : `${actualTarget.width} x ${actualTarget.height}`}`,
+        `colors: ${info.numColors} / bpp=${info.bitsPerPixel}`,
+        `uid: ${info.uidHex || '(unknown)'}`,
+        `orientation: ${info.orientation !== undefined ? info.orientation : '(unknown)'}`,
+        `target-size UI: ${actualTarget.width === 128 && actualTarget.height === 296 ? '296x128' : `${actualTarget.width}x${actualTarget.height}`} に切り替えました`
+      ].join('\n'));
+      renderProcessedPreview();
+    }
+
+    setStatus(changed
+      ? `デバイス交換を検出: ${actualTarget.width} x ${actualTarget.height}`
+      : `デバイス監視中: ${actualTarget.width} x ${actualTarget.height}`, changed ? 'warning' : 'success');
+
+    info._firstDetect = firstDetect;
+    info._changed = changed;
+    if (!isAuto || firstDetect || changed) {
+      good(`${changed ? 'device changed and re-detected' : 'device detected'}: ${actualTarget.width}x${actualTarget.height} uid=${info.uidHex || 'unknown'}`);
+    }
+    return info;
+  }
+
+  async function sendImageFragment(blockIdx, fragIdx, fragBytes, last) {
+    if (fragBytes.length > 250) throw new Error('fragment exceeds 250 bytes');
+    const apdu = [0xF0,0xD3,0x00, last ? 0x01 : 0x00, (fragBytes.length + 2) & 0xFF, blockIdx & 0xFF, fragIdx & 0xFF, ...fragBytes];
+    const data = await transceiveIsoDep(apdu, `IMAGE b=${blockIdx} f=${fragIdx} len=${fragBytes.length} last=${last ? 1 : 0}`, 1500000);
+    const { sw } = parseApduSW(data);
+    sys(`  IMAGE b=${blockIdx} f=${fragIdx} SW=${swName(sw)}`);
+    if (sw !== 0x9000) throw new Error(`IMAGE fragment failed: block=${blockIdx} frag=${fragIdx} SW=${swName(sw)}`);
+  }
+
+  async function sendCompressedBlock(blockIdx, compBytes, totalBlocks) {
+    let off = 0;
+    let fragIdx = 0;
+    while (off < compBytes.length) {
+      const frag = compBytes.slice(off, off + 250);
+      const last = (off + frag.length >= compBytes.length);
+      await sendImageFragment(blockIdx, fragIdx, frag, last);
+      off += frag.length;
+      fragIdx++;
+      await sleep(12);
+    }
+    good(`BLOCK ${blockIdx} OK: cmp=${compBytes.length} bytes, frags=${fragIdx}`);
+    setProgress(((blockIdx + 1) / totalBlocks) * 90);
+  }
+
+  async function refreshDisplayNonBlocking() {
+    setProgressStage('REFRESH送信');
+    sys('=== REFRESH non-blocking ===');
+    const data = await transceiveIsoDep([0xF0,0xD4,0x85,0x80,0x00], 'REFRESH non-blocking', 1000000);
+    const { sw } = parseApduSW(data);
+    sys(`  REFRESH SW=${swName(sw)}`);
+    if (sw !== 0x9000) throw new Error(`REFRESH failed: ${swName(sw)}`);
+    good('REFRESH accepted. e-paper更新開始');
+    setProgress(100);
+  }
+
+  async function pollRefreshStatus(maxSeconds = 120, intervalMs = 500) {
+    sys(`=== POLL refresh status (max ${maxSeconds}s / interval ${intervalMs}ms) ===`);
+    const start = Date.now();
+    let failures = 0;
+    let lastBusyLogAt = 0;
+    let pollCount = 0;
+    while ((Date.now() - start) < maxSeconds * 1000) {
+      await sleep(intervalMs);
+      pollCount++;
+      try {
+        const minimize = isMinPollLogEnabled();
+        if (minimize) quietLogDepth++;
+        let data;
+        try {
+          data = await transceiveIsoDep([0xF0,0xDE,0x00,0x00,0x01], 'POLL STATUS', 1000000);
+        } finally {
+          if (minimize) quietLogDepth = Math.max(0, quietLogDepth - 1);
+        }
+        const { body, sw } = parseApduSW(data);
+        if (sw !== 0x9000) {
+          if (!isMinPollLogEnabled()) sys(`  POLL SW=${swName(sw)}`);
+          failures++;
+          if (failures >= 3) break;
+          continue;
+        }
+        failures = 0;
+        const st = body.length ? body[0] : 0xFF;
+        const elapsedSec = Math.round((Date.now() - start) / 1000);
+        if (st === 0x00) {
+          good(`画面更新完了: ${elapsedSec}s / polls=${pollCount}`);
+          setProgressStage('画面更新完了');
+          return true;
+        }
+        setProgressStage(`画面更新中: ${elapsedSec}s`);
+        const now = Date.now();
+        if (!isMinPollLogEnabled() || now - lastBusyLogAt > 5000) {
+          sys(`  POLL status=busy elapsed=${elapsedSec}s`);
+          lastBusyLogAt = now;
+        }
+      } catch (e) {
+        failures++;
+        if (!isMinPollLogEnabled()) err(`POLL failed (${failures}): ${e.message || e}`);
+        if (failures >= 3) break;
+      }
+    }
+    sys('POLLは完了確認できませんでした。念のため短時間だけ自動監視を待機します。');
+    return false;
+  }
+
+  function buildSolidPacked(width, height, colorIndex) {
+    const indices = new Uint8Array(width * height);
+    indices.fill(colorIndex & 0x03);
+    return packIndices4Color(indices, width, height);
+  }
+
+  async function sendPackedImageBlocks(packed, label, progressBase = 0, progressSpan = 90) {
+    const blocks = splitPackedIntoCompressedBlocks(packed);
+    const maxCmp = Math.max(...blocks.map(b => b.length));
+    const maxFrags = Math.max(...blocks.map(b => Math.ceil(b.length / 250)));
+    sys(`${label}: packed=${packed.length} bytes blocks=${blocks.length} maxCmp=${maxCmp} maxFrags=${maxFrags}`);
+    if (maxFrags > 1) sys(`${label}: 注意: 複数フラグメント送信になります。`);
+    for (let i = 0; i < blocks.length; i++) {
+      setStatus(`${label}: block ${i + 1} / ${blocks.length}`, 'warning');
+      sys(`-- ${label} BLOCK ${i} cmp=${blocks[i].length} bytes --`);
+      await sendCompressedBlock(i, blocks[i], blocks.length, progressBase, progressSpan);
+      await sleep(20);
+    }
+    return { blocks, maxCmp, maxFrags };
+  }
+
+  async function runAntiGhostClearIfNeeded(actualTarget) {
+    // v6.15: 残像対策の全白/全黒クリアは削除。更新完了のPOLL確認で安定化します。
+    return;
+  }
+
+  async function waitForRefreshCompleteOrFallback(label = 'REFRESH') {
+    if (isRefreshPollEnabled()) {
+      const maxSec = getRefreshPollTimeoutSec();
+      setStatus(`${label}: 画面更新を確認中（最大${maxSec}秒）`, 'warning');
+      const done = await pollRefreshStatus(maxSec, 500);
+      if (done) return true;
+      // ポーリングが完了確認できなかった場合だけ短い保険待機を入れる。
+      suspendAutoDetect(15000, `${label}完了未確認の保険待機`);
+      return false;
+    }
+    suspendAutoDetect(30000, `${label}後の固定保険待機`);
+    return false;
+  }
+
+  async function uploadProcessedImage() {
+    const sourceMode = getInputMode();
+    if (sourceMode === 'image' && !loadedImage) throw new Error('画像を先に選択してください。');
+    sys('============================================================');
+    sys('IMAGE UPLOAD START');
+    setProgress(0, true);
+    setProgressStage('書き込み準備中');
+    setStatus('書き込み準備中: RATS / AUTH / GET INFO', 'warning');
+    const info = await prepareForWrite();
+    const actualTarget = targetFromInfo(info);
+    if (!actualTarget) throw new Error(`未対応サイズです: ${info.width}x${info.height}`);
+
+    const manual = getManualTargetValue();
+    const actualKey = `${actualTarget.width}x${actualTarget.height}`;
+    const displayAliasOk = (actualKey === '128x296' && manual === '296x128');
+    if (manual !== 'auto' && manual !== actualKey && !displayAliasOk) {
+      throw new Error(`手動選択サイズ(${manual})と実機サイズ(${actualKey})が違います。Autoに戻すか、正しいサイズを選んでください。`);
+    }
+
+    // Auto時は実機サイズで必ず再生成する。
+    const orient = getOrientationSetting(actualTarget);
+    const baseTarget = getBaseTargetForOrientation(actualTarget, orient);
+    const scalePercent = parseInt($('image-scale').value, 10) || 100;
+    const srcCanvas = $('canvas-source');
+    let baseResult;
+    if (sourceMode === 'image') {
+      drawCroppedImageToCanvas(loadedImage, srcCanvas, baseTarget, scalePercent);
+      const ctx = srcCanvas.getContext('2d', { willReadFrequently: true });
+      const imgData = ctx.getImageData(0, 0, baseTarget.width, baseTarget.height);
+      const algoKey = $('dither-algo').value;
+      const brightness = parseInt($('brightness').value, 10) || 0;
+      baseResult = ditherImageData(imgData, algoKey, brightness);
+    } else {
+      baseResult = buildColorCheckBaseResult(baseTarget.width, baseTarget.height, sourceMode);
+      srcCanvas.width = baseTarget.width;
+      srcCanvas.height = baseTarget.height;
+      srcCanvas.getContext('2d').putImageData(new ImageData(baseResult.outRGBA, baseTarget.width, baseTarget.height), 0, 0);
+    }
+    processedImage = transformDitherResultToDevice(baseResult, baseTarget.width, baseTarget.height, actualTarget, orient);
+    const outCanvas = $('canvas-dither');
+    drawPreviewResult(baseResult, baseTarget, actualTarget, orient, outCanvas);
+
+    const deviceIndices = mapIndicesForDevice(processedImage.indices, sourceMode);
+    const packed = packIndices4Color(deviceIndices, actualTarget.width, actualTarget.height);
+    const counts = summarizePaletteCounts(processedImage.indices);
+    const deviceCounts = summarizePaletteCounts(deviceIndices);
+    sys(`target=${actualTarget.width}x${actualTarget.height} algo=${processedImage.algo} scale=${scalePercent}% ${processedImage.orientNote} colors=${formatPaletteCounts(counts)} deviceRaw=${formatPaletteCounts(deviceCounts)} ${colorMapNote(sourceMode)}`);
+    $('process-note').innerHTML = `upload: <strong>${actualTarget.width} x ${actualTarget.height}</strong> / ${processedImage.algo} / scale=${scalePercent}% / ${processedImage.orientNote} / packed=${packed.length} bytes / colors=${formatPaletteCounts(counts)} / deviceRaw=${formatPaletteCounts(deviceCounts)} / ${colorMapNote(sourceMode)}`;
+
+    await runAntiGhostClearIfNeeded(actualTarget);
+
+    const result = await sendPackedImageBlocks(packed, 'IMAGE', 0, 90);
+    $('process-note').innerHTML = `upload: <strong>${actualTarget.width} x ${actualTarget.height}</strong> / ${processedImage.algo} / scale=${scalePercent}% / ${processedImage.orientNote} / packed=${packed.length} bytes / blocks=${result.blocks.length} / max fragment count=${result.maxFrags} / colors=${formatPaletteCounts(counts)}`;
+    await refreshDisplayNonBlocking();
+    setProgressStage('REFRESH送信済み / 更新確認中');
+    showInfo(`画像アップロード完了、REFRESH送信済みです。
+size: ${actualTarget.width} x ${actualTarget.height}
+algo: ${processedImage.algo}
+scale: ${scalePercent}%
+orientation: ${processedImage.orientNote}
+
+続けて画面更新の確認コマンドで完了状態をポーリングします。`, 'warning');
+    const done = await waitForRefreshCompleteOrFallback('本画像REFRESH');
+    if (done) {
+      setProgress(100);
+      setProgressStage('書き込み完了');
+      setStatus('書き込み完了。自動監視を再開できます。', 'success');
+      showInfo(`書き込み完了
+size: ${actualTarget.width} x ${actualTarget.height}
+algo: ${processedImage.algo}
+scale: ${scalePercent}%
+orientation: ${processedImage.orientNote}`);
+    } else {
+      setStatus('更新完了を確認できませんでした。表示が落ち着くまで少し待ってください。', 'warning');
+    }
+  }
+
+  async function refreshOnly() {
+    if (!activated) await switchProtocolBasicAndRats();
+    await refreshDisplayNonBlocking();
+    const ms = getAutoDetectCooldownMs();
+    suspendAutoDetect(ms, '手動REFRESH後');
+    setStatus(ms ? `REFRESHのみ送信済み。自動監視は約${Math.ceil(ms/1000)}秒待機します。` : 'REFRESHのみ送信済み。カードを動かさず待ってください。', 'warning');
+    showInfo(ms ? `REFRESHのみ送信済みです。自動監視は約${Math.ceil(ms/1000)}秒待機します。` : 'REFRESHのみ送信済みです。30〜60秒ほどカードを動かさず待ってください。', 'warning');
+  }
+
+  async function pollOnly() {
+    if (!activated) await switchProtocolBasicAndRats();
+    await pollRefreshStatus(getRefreshPollTimeoutSec(), 500);
+  }
+
+  function updateAlgoDescription() {
+    const key = $('dither-algo').value;
+    const box = $('algo-description');
+    if (box) box.innerHTML = ALGO_DESCRIPTIONS[key] || '';
+  }
+
+  function rerenderIfReady() {
+    updateAlgoDescription();
+    if (getInputMode() !== 'image' || loadedImage) renderProcessedPreview();
+  }
+
+  async function copyLogToClipboard() {
+    const text = log ? log.textContent : '';
+    if (!text.trim()) {
+      setStatus('コピーする通信ログがありません。', 'warning');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus('通信ログをクリップボードにコピーしました。', 'success');
+      sys('通信ログをクリップボードにコピーしました。');
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        setStatus('通信ログをクリップボードにコピーしました。', 'success');
+        sys('通信ログをクリップボードにコピーしました。');
+      } catch (e2) {
+        setStatus('通信ログのコピーに失敗しました。', 'danger');
+        err('copy log failed: ' + (e2.message || e2));
+      } finally {
+        document.body.removeChild(ta);
+      }
+    }
+  }
+
+
+  async function tryAutoDetectOnce() {
+    if (!device || busy || autoDetectRunning || manualOperationPending) return;
+    if (!$('chk-auto-detect') || !$('chk-auto-detect').checked) return;
+    const remainMs = remainingAutoDetectSuspendMs();
+    if (remainMs > 0) {
+      const now = Date.now();
+      if (now - lastAutoDetectSuspendLogAt > 15000) {
+        const sec = Math.ceil(remainMs / 1000);
+        if (!isMinPollLogEnabled()) sys(`AUTO DEVICE WATCH: suspended ${sec}s (${autoDetectSuspendReason || 'e-paper更新中'})`);
+        setStatus(`e-paper更新待ちのため自動監視を一時停止中（残り約${sec}秒）`, 'warning');
+        lastAutoDetectSuspendLogAt = now;
+      }
+      return;
+    }
+    autoDetectRunning = true;
+    const minimize = isMinPollLogEnabled();
+    let info = null;
+    try {
+      if (minimize) quietLogDepth++;
+      info = await detectDeviceAndApply({ auto: true });
+    } catch (e) {
+      const now = Date.now();
+      if (!minimize && now - lastAutoDetectQuietLogAt > 15000) {
+        sys('AUTO DEVICE WATCH: no tag / retry later: ' + (e.message || e));
+        lastAutoDetectQuietLogAt = now;
+      }
+      setStatus(lastDeviceInfo ? 'デバイス交換を自動監視中。交換したら数秒で再判定します。' : 'RC-S300接続済み。ezsignを乗せると自動判定します。', 'info');
+    } finally {
+      if (minimize) quietLogDepth = Math.max(0, quietLogDepth - 1);
+      autoDetectRunning = false;
+    }
+    if (minimize && info && (info._firstDetect || info._changed)) {
+      good(`${info._changed ? 'AUTO DEVICE WATCH: changed' : 'AUTO DEVICE WATCH: detected'} ${info.width}x${info.height} ${info.numColors}color uid=${info.uidHex || info.uid || 'unknown'}`);
+    }
+  }
+
+  function startAutoDetectLoop() {
+    stopAutoDetectLoop();
+    if (!$('chk-auto-detect') || !$('chk-auto-detect').checked) return;
+    if (!device) return;
+    setStatus(lastDeviceInfo ? 'デバイス交換を自動監視中。' : 'RC-S300接続済み。ezsignを乗せると自動判定します。', 'info');
+    autoDetectTimer = setInterval(() => {
+      tryAutoDetectOnce();
+    }, 6000);
+    // 接続直後にも1回試します。
+    setTimeout(() => { tryAutoDetectOnce(); }, 700);
+  }
+
+  function stopAutoDetectLoop() {
+    if (autoDetectTimer) clearInterval(autoDetectTimer);
+    autoDetectTimer = null;
+  }
+
+  function installPanHandlers(canvas) {
+    if (!canvas) return;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    canvas.addEventListener('pointerdown', (ev) => {
+      dragging = true;
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+      canvas.setPointerCapture(ev.pointerId);
+      ev.preventDefault();
+    });
+    canvas.addEventListener('pointermove', (ev) => {
+      if (!dragging || !loadedImage) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / Math.max(1, rect.width);
+      const scaleY = canvas.height / Math.max(1, rect.height);
+      cropPanX += (ev.clientX - lastX) * scaleX;
+      cropPanY += (ev.clientY - lastY) * scaleY;
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+      renderProcessedPreview();
+      ev.preventDefault();
+    });
+    const end = (ev) => {
+      dragging = false;
+      try { canvas.releasePointerCapture(ev.pointerId); } catch (_) {}
+    };
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointercancel', end);
+    canvas.addEventListener('pointerleave', () => { dragging = false; });
+  }
+
+  // -------------------------------------------------------------------------
+  // Connection / UI
+  // -------------------------------------------------------------------------
+  async function connect() {
+    if (busy || device) return;
+    if (!navigator.usb) {
+      setStatus('このブラウザは WebUSB 非対応です。Chrome / Edge を使ってください。', 'danger');
+      return;
+    }
+    let selectedDevice = null;
+    try {
+      selectedDevice = await navigator.usb.requestDevice({ filters: [
+        { vendorId: 0x054C, productId: 0x0DC8 },
+        { vendorId: 0x054C, productId: 0x0DC9 }
+      ] });
+    } catch (e) {
+      setStatus('デバイス選択がキャンセルされました。もう一度「RC-S300 に接続」を押せます。', 'info');
+      sys('device selection canceled or failed: ' + (e.message || e));
+      enableButtons(false, false);
+      return;
+    }
+    busy = true;
+    enableButtons(false, true);
+    try {
+      device = selectedDevice;
+      await device.open();
+      if (device.configuration === null) await device.selectConfiguration(1);
+      const iface = device.configuration.interfaces.find(i =>
+        i.alternates && i.alternates.some(a => a.interfaceClass === 0xFF)
+      ) || device.configuration.interfaces.find(i =>
+        i.alternate && i.alternate.interfaceClass === 0xFF
+      );
+      if (!iface) throw new Error('Vendor specific interface not found');
+      const alt = iface.alternate || iface.alternates.find(a => a.interfaceClass === 0xFF) || iface.alternates[0];
+      try { await device.claimInterface(iface.interfaceNumber); }
+      catch (e) { throw new Error('claimInterface に失敗しました。ほかのタブ/アプリでRC-S300を開いている場合は閉じ、USBを挿し直してください: ' + (e.message || e)); }
+      cfg.ifaceNum = iface.interfaceNumber;
+      cfg.epIn  = alt.endpoints.find(e => e.direction === 'in').endpointNumber;
+      cfg.epOut = alt.endpoints.find(e => e.direction === 'out').endpointNumber;
+      seq = 0; isoBlockNum = 0; activated = false; authenticated = false;
+      sys(`connected PID=0x${device.productId.toString(16)} iface=${cfg.ifaceNum} EP out=${cfg.epOut} in=${cfg.epIn}`);
+      setStatus(`接続済み: ${device.productName || 'RC-S300'}`, 'success');
+      enableButtons(true, false);
+      startAutoDetectLoop();
+    } catch (e) {
+      err(e.stack || e.message || String(e));
+      setStatus('接続エラー: ' + (e.message || e), 'danger');
+      try { if (device && device.opened) await device.close(); } catch (_) {}
+      device = null;
+      enableButtons(false, false);
+    } finally {
+      busy = false;
+      enableButtons(!!device, false);
+    }
+  }
+
+  async function disconnect() {
+    stopAutoDetectLoop();
+    if (device) {
+      try { await device.releaseInterface(cfg.ifaceNum); } catch (_) {}
+      try { await device.close(); } catch (_) {}
+    }
+    device = null; activated = false; authenticated = false; lastDeviceInfo = null;
+    enableButtons(false);
+    setStatus('切断しました。', 'info');
+  }
+
+  function applyUIMode(mode) {
+    const m = mode === 'debug' ? 'debug' : 'normal';
+    document.body.classList.toggle('mode-normal', m === 'normal');
+    document.body.classList.toggle('mode-debug', m === 'debug');
+    const sel = $('ui-mode');
+    if (sel) sel.value = m;
+    try { localStorage.setItem('ezsignUiMode', m); } catch (_) {}
+    if (m === 'normal' && $('info-box')) $('info-box').style.display = 'none';
+  }
+
+  function enableButtons(en, duringBusy = false) {
+    const ids = [
+      'btn-upload-image','btn-refresh-only','btn-poll-only','btn-detect-device','btn-auto','btn-activate-basic','btn-auth','btn-info','btn-rats','btn-uid','btn-firmware','btn-serial'
+    ];
+    ids.forEach(id => { if ($(id)) $(id).disabled = !en || duringBusy || (id === 'btn-upload-image' && !processedImage); });
+    $('btn-disconnect').disabled = !en || duringBusy;
+    $('btn-connect').disabled = en;
+  }
+
+  $('btn-connect').onclick = connect;
+  if ($('ui-mode')) {
+    let saved = 'normal';
+    try { saved = localStorage.getItem('ezsignUiMode') || 'normal'; } catch (_) {}
+    $('ui-mode').onchange = () => applyUIMode($('ui-mode').value);
+    applyUIMode(saved === 'debug' ? 'debug' : 'normal');
+  }
+  $('btn-disconnect').onclick = () => withBusy(disconnect);
+  $('btn-clear-log').onclick = () => { log.innerHTML = ''; $('info-box').style.display = 'none'; setProgress(0); setProgressStage('待機中'); };
+  $('btn-copy-log').onclick = copyLogToClipboard;
+  $('image-file').onchange = (e) => { cropPanX = 0; cropPanY = 0; loadImageFile(e.target.files && e.target.files[0]); };
+  if ($('source-mode')) $('source-mode').onchange = () => { cropPanX = 0; cropPanY = 0; rerenderIfReady(); };
+  if ($('color-map')) $('color-map').onchange = () => { rerenderIfReady(); };
+  $('target-size').onchange = () => { cropPanX = 0; cropPanY = 0; rerenderIfReady(); };
+  $('dither-algo').onchange = rerenderIfReady;
+  $('brightness').oninput = () => { $('brightness-value').textContent = $('brightness').value; };
+  $('brightness').onchange = rerenderIfReady;
+  $('image-scale').oninput = () => { $('image-scale-value').textContent = $('image-scale').value; };
+  $('image-scale').onchange = rerenderIfReady;
+  if ($('btn-scale-fit')) $('btn-scale-fit').onclick = () => { $('image-scale').value = '80'; $('image-scale-value').textContent = '80'; rerenderIfReady(); };
+  if ($('btn-scale-reset')) $('btn-scale-reset').onclick = () => { $('image-scale').value = '100'; $('image-scale-value').textContent = '100'; rerenderIfReady(); };
+  if ($('btn-pan-reset')) $('btn-pan-reset').onclick = () => { cropPanX = 0; cropPanY = 0; rerenderIfReady(); };
+  $('orientation-mode').onchange = () => { cropPanX = 0; cropPanY = 0; rerenderIfReady(); };
+  if ($('crop-bg-fill')) $('crop-bg-fill').onchange = rerenderIfReady;
+  $('manual-rotate').onchange = rerenderIfReady;
+  $('manual-flip-h').onchange = rerenderIfReady;
+  $('btn-upload-image').onclick = async () => {
+    stopAutoDetectLoop();
+    manualOperationPending = true;
+    try {
+      await withBusy(uploadProcessedImage);
+    } finally {
+      manualOperationPending = false;
+      if (device && $('chk-auto-detect') && $('chk-auto-detect').checked) startAutoDetectLoop();
+    }
+  };
+  $('btn-refresh-only').onclick = () => withBusy(refreshOnly);
+  $('btn-poll-only').onclick = () => withBusy(pollOnly);
+  $('btn-auto').onclick = () => withBusy(autoDiagnostic);
+  $('btn-activate-basic').onclick = () => withBusy(switchProtocolBasicAndRats);
+  $('btn-auth').onclick = () => withBusy(authenticateEzsign);
+  $('btn-info').onclick = () => withBusy(async () => { lastDeviceInfo = await getInfoEzsign(); renderProcessedPreview(); });
+  $('btn-detect-device').onclick = () => withBusy(async () => { await detectDeviceAndApply(); });
+  $('btn-rats').onclick = () => withBusy(async () => {
+    const r = await sendRfFrame([0xE0,0x80], 'Manual RATS only E0 80', 300000);
+    if (r && r.ok) good('RATS response: ' + toHex(r.rfData));
+  });
+  $('btn-uid').onclick = () => withBusy(async () => {
+    const raw = await send(CMD.GET_UID, 'PC/SC GET UID');
+    const r = parseDirectApduResponse(raw);
+    if (r) sys(`  data=[${toHex(r.data)}] SW=${swName(r.sw)}`);
+  });
+  $('btn-firmware').onclick = () => withBusy(async () => {
+    const raw = await send(CMD.FIRMWARE, 'Get Firmware');
+    const r = parseDirectApduResponse(raw);
+    if (r) sys(`  firmware data=[${toHex(r.data)}] SW=${swName(r.sw)}`);
+  });
+  $('btn-serial').onclick = () => withBusy(async () => {
+    const raw = await send(CMD.SERIAL, 'Get Serial');
+    const r = parseDirectApduResponse(raw);
+    if (r) sys(`  serial data=[${toHex(r.data)}] SW=${swName(r.sw)} ascii="${new TextDecoder('ascii').decode(Uint8Array.from(r.data))}"`);
+  });
+
+  if ($('chk-auto-detect')) $('chk-auto-detect').onchange = () => { if ($('chk-auto-detect').checked) startAutoDetectLoop(); else stopAutoDetectLoop(); };
+  installPanHandlers($('canvas-source'));
+  installPanHandlers($('canvas-dither'));
+  updateAlgoDescription();
+  enableButtons(false, false);
+  updateDeviceColorNote();
+  setProgressStage('待機中');
+  setStatus('未接続。RC-S300 に接続を押してください。', 'info');
+})();
+</script>
+</body>
+</html>

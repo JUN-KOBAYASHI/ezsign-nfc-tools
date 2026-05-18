@@ -1,0 +1,46 @@
+# keywords.txt for ezsignNFC
+# Format: NAME<TAB>KEYWORD_TYPE
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+ezsignNFC	KEYWORD1
+EzsignDevice	KEYWORD1
+EzsignError	KEYWORD1
+EzsignDeviceInfo	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+detect	KEYWORD2
+authenticate	KEYWORD2
+getDeviceInfo	KEYWORD2
+sendImageIndices	KEYWORD2
+sendImageRGB	KEYWORD2
+refreshDisplay	KEYWORD2
+waitForRefresh	KEYWORD2
+isReady	KEYWORD2
+lastError	KEYWORD2
+errorString	KEYWORD2
+setLogger	KEYWORD2
+setOversizedBlockBehavior	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+EZSIGN_OK	LITERAL1
+EZSIGN_NO_CARD	LITERAL1
+EZSIGN_AUTH_FAILED	LITERAL1
+EZSIGN_INFO_FAILED	LITERAL1
+EZSIGN_SEND_FAILED	LITERAL1
+EZSIGN_REFRESH_FAILED	LITERAL1
+EZSIGN_OVERSIZED_BLOCK	LITERAL1
+EZSIGN_NOT_INITIALIZED	LITERAL1
+EZSIGN_OUT_OF_MEMORY	LITERAL1
+EZSIGN_BLOCK_SUBSTITUTE_WHITE	LITERAL1
+EZSIGN_BLOCK_FAIL	LITERAL1
+COLOR_BLACK	LITERAL1
+COLOR_WHITE	LITERAL1
+COLOR_YELLOW	LITERAL1
+COLOR_RED	LITERAL1

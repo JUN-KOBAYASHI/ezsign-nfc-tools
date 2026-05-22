@@ -1,0 +1,1505 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EZ Sign オンライン会議サイン生成ツール</title>
+
+  <!-- Web fonts: all are open/commercial-usable fonts via Google Fonts. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&family=LINE+Seed+JP:wght@400;700;800&family=M+PLUS+1p:wght@400;500;700;900&family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --page-bg: #eef3f8;
+      --paper: #f8fafc;
+      --ink: #111827;
+      --muted: #64748b;
+      --ep-black: #0b0b0b;
+      --ep-white: #fbfdff;
+      --ep-red: #dc2626;
+      --ep-yellow: #facc15;
+      --ep-border: rgba(0,0,0,.22);
+    }
+
+    * { box-sizing: border-box; }
+    html, body, #root { min-height: 100%; margin: 0; }
+    body {
+      background: var(--page-bg);
+      color: var(--ink);
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      padding-bottom: 48px;
+    }
+
+    .hero-gradient {
+      background: #f8fafc;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+    }
+
+    .epaper-stage {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 390px;
+      padding: 28px 12px 34px;
+      overflow: hidden;
+      background: #e5eaf0;
+      border-radius: 6px;
+      border: 1px solid rgba(15,23,42,.16);
+    }
+
+    .ezsign-device {
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,.34);
+      box-shadow: 0 18px 40px rgba(15,23,42,.26);
+      line-height: 0;
+    }
+    /* 実機イメージに合わせた非対称の余白。4.2inchは下を広め、2.9inchは左を広め。 */
+    .ezsign-device.large { padding: 16px 16px 42px 16px; }
+    .ezsign-device.small { padding: 12px 12px 12px 34px; }
+    .ezsign-device.frame-black { background: #050505; border-color: #000; }
+    .ezsign-device.frame-white { background: #f8fafc; border-color: #cbd5e1; box-shadow: 0 18px 40px rgba(15,23,42,.18); }
+    .ezsign-device.frame-silver { background: #b8bec7; border-color: #8f98a3; box-shadow: 0 18px 40px rgba(15,23,42,.20); }
+    .ezsign-mat {
+      display: inline-block;
+      background: transparent;
+      border: 1px solid rgba(15,23,42,.30);
+      line-height: 0;
+    }
+    .ezsign-device.frame-black .ezsign-mat { border-color: rgba(255,255,255,.16); }
+    .ezsign-device.frame-white .ezsign-mat { border-color: rgba(15,23,42,.18); }
+    .ezsign-device.frame-silver .ezsign-mat { border-color: rgba(15,23,42,.24); }
+
+    .scaled-wrap {
+      position: relative;
+      transform-origin: top center;
+    }
+
+    .epaper {
+      --black: var(--ep-black);
+      --white: var(--ep-white);
+      --red: var(--ep-red);
+      --yellow: var(--ep-yellow);
+      position: relative;
+      overflow: hidden;
+      background: var(--white);
+      color: var(--black);
+      border: 1px solid var(--ep-border);
+      border-radius: 1px;
+      box-shadow: none;
+      image-rendering: pixelated;
+      line-height: 1.05;
+      user-select: none;
+      contain: layout paint;
+    }
+
+    .epaper.ep-large { width: 400px; height: 300px; }
+    .epaper.ep-small { width: 296px; height: 128px; border-radius: 2px; }
+    .epaper * { box-sizing: border-box; min-width: 0; }
+    .epaper > div { width: 100%; height: 100%; overflow: hidden; }
+    .epaper .mono { font-family: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .02em; }
+    .epaper .caps { text-transform: uppercase; letter-spacing: .12em; }
+    .epaper .muted { opacity: .72; }
+    .epaper .black { background: var(--black); color: var(--white); }
+    .epaper .red { background: var(--red); color: var(--white); }
+    .epaper .yellow { background: var(--yellow); color: var(--black); }
+    .epaper .outline { border: 3px solid var(--black); }
+    .epaper .thin-outline { border: 1px solid var(--black); }
+    .epaper .dither {
+      background-image: repeating-conic-gradient(var(--black) 0% 25%, transparent 0% 50%);
+      background-size: 4px 4px;
+      opacity: .16;
+    }
+    .epaper .no-wrap { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .epaper .tiny { font-size: calc(8px * var(--fs-all) * var(--fs-meta)); }
+    .epaper .qr {
+      background: var(--white);
+      border: 4px solid var(--white);
+      box-shadow: 0 0 0 2px var(--black);
+    }
+    .epaper svg { display: block; }
+
+    /* ---------- screen: meeting now ---------- */
+    .screen-now-large .topbar {
+      height: 44px;
+      padding: 8px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 900;
+    }
+    .screen-now-large .status {
+      position: absolute; left: 18px; top: 64px; right: 18px; height: 88px;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      border: 4px solid var(--black);
+    }
+    .screen-now-large .status-main { font-size: calc(39px * var(--fs-all) * var(--fs-huge)); font-weight: 900; letter-spacing: .06em; }
+    .screen-now-large .title { position: absolute; left: 18px; right: 18px; top: 166px; font-size: calc(25px * var(--fs-all) * var(--fs-title)); font-weight: 900; }
+    .screen-now-large .timebar { position: absolute; left: 18px; right: 18px; bottom: 52px; height: 44px; padding: 8px 12px; display:flex; align-items:center; justify-content:space-between; font-weight:900; }
+    .screen-now-large .footer { position:absolute; left:18px; right:18px; bottom:14px; display:flex; justify-content:space-between; font-size: calc(13px * var(--fs-all) * var(--fs-body)); font-weight:800; }
+
+    .screen-now-small { display:grid; grid-template-columns: 98px 1fr; }
+    .screen-now-small .side { height:128px; padding:11px 9px; display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-now-small .side .jp { font-size: calc(24px * var(--fs-all) * var(--fs-title)); font-weight:900; writing-mode:horizontal-tb; }
+    .screen-now-small .body { padding:10px 10px 8px; display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-now-small .title { font-size: calc(18px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-now-small .time { font-size: calc(22px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-now-small .room { font-size: calc(12px * var(--fs-all) * var(--fs-meta)); font-weight:800; }
+
+    /* ---------- available ---------- */
+    .screen-available-large .hero { height: 92px; padding: 13px 18px; display:flex; justify-content:space-between; align-items:center; }
+    .screen-available-large .hero .jp { font-size: calc(42px * var(--fs-all) * var(--fs-huge)); font-weight: 900; }
+    .screen-available-large .hero .en { font-size: calc(16px * var(--fs-all) * var(--fs-body)); font-weight: 900; }
+    .screen-available-large .center { position:absolute; left:18px; right:18px; top:112px; bottom:22px; display:grid; grid-template-columns: .92fr 1.08fr; gap:12px; }
+    .screen-available-large .empty { border:4px solid var(--black); padding:14px; display:flex; flex-direction:column; justify-content:center; }
+    .screen-available-large .empty .big { font-size: calc(48px * var(--fs-all) * var(--fs-huge)); font-weight: 900; line-height: .92; }
+    .screen-available-large .next { padding:12px; border:3px solid var(--black); display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-available-large .next-title { font-size: calc(16px * var(--fs-all) * var(--fs-title)); font-weight:900; line-height:1.05; }
+    .screen-available-small { display:grid; grid-template-columns: 108px 1fr; height:128px; }
+    .screen-available-small .left { padding:10px; display:flex; flex-direction:column; justify-content:center; }
+    .screen-available-small .left .jp { font-size: calc(33px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-available-small .right { padding:10px; display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-available-small .next-title { font-size: calc(16px * var(--fs-all) * var(--fs-body)); font-weight:900; }
+
+    /* ---------- next meeting ---------- */
+    .screen-next-large .band { position:absolute; left:0; top:0; right:0; height:72px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    .screen-next-large .clock { position:absolute; left:20px; top:98px; font-size: calc(76px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-next-large .label { position:absolute; right:24px; top:106px; width:116px; height:74px; border:4px solid var(--black); display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; font-size: calc(19px * var(--fs-all) * var(--fs-title)); }
+    .screen-next-large .title { position:absolute; left:20px; right:20px; bottom:56px; font-size: calc(26px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-next-large .footer { position:absolute; left:20px; right:20px; bottom:16px; display:flex; justify-content:space-between; font-weight:800; }
+    .screen-next-small { padding:10px 12px; display:grid; grid-template-columns: 104px 1fr; gap:10px; height:128px; }
+    .screen-next-small .time { font-size: calc(42px * var(--fs-all) * var(--fs-huge)); font-weight:900; display:flex; align-items:center; justify-content:center; border-right:3px solid var(--black); }
+    .screen-next-small .info { display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-next-small .title { font-size: calc(17px * var(--fs-all) * var(--fs-body)); font-weight:900; }
+
+    /* ---------- join ---------- */
+    .screen-join-large { padding:18px; display:grid; grid-template-columns: 138px minmax(0,1fr); gap:18px; height:300px; }
+    .screen-join-large .qrbox { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px; }
+    .screen-join-large .info { display:flex; flex-direction:column; justify-content:space-between; min-width:0; }
+    .screen-join-large .headline { font-size: calc(21px * var(--fs-all) * var(--fs-title)); font-weight:900; white-space:normal; overflow:hidden; line-height:1.04; }
+    .screen-join-large .kv { border:3px solid var(--black); padding:9px 10px; margin-top:7px; }
+    .screen-join-large .k { font-size: calc(9px * var(--fs-all) * var(--fs-meta)); font-weight:900; letter-spacing:.12em; opacity:.7; }
+    .screen-join-large .v { font-size: calc(22px * var(--fs-all) * var(--fs-title)); font-weight:900; margin-top:4px; }
+    .screen-join-small { height:128px; display:grid; grid-template-columns: 94px minmax(0,1fr); gap:9px; padding:10px; }
+    .screen-join-small .info { display:flex; flex-direction:column; justify-content:space-between; min-width:0; }
+    .screen-join-small .headline { font-size: calc(15px * var(--fs-all) * var(--fs-body)); font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .screen-join-small .v { font-size: calc(13px * var(--fs-all) * var(--fs-body)); font-weight:900; }
+
+    /* ---------- schedule ---------- */
+    .screen-schedule-large { padding:15px 18px; }
+    .screen-schedule-large .head { height:40px; display:flex; justify-content:space-between; align-items:center; border-bottom:4px solid var(--black); }
+    .screen-schedule-large .head .jp { font-size: calc(26px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-schedule-large .rows { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+    .screen-schedule-large .row { height:40px; display:grid; grid-template-columns: 82px 1fr 74px; align-items:center; border:2px solid var(--black); }
+    .screen-schedule-large .row > div { padding: 0 9px; font-weight:900; }
+    .screen-schedule-large .row .time { font-size: calc(15px * var(--fs-all) * var(--fs-body)); }
+    .screen-schedule-large .row .roomcell { display:flex; flex-direction:column; justify-content:center; align-items:flex-start; line-height:1.0; }
+    .screen-schedule-large .row .roomcell .label { font-size: calc(8px * var(--fs-all) * var(--fs-meta)); font-weight:900; letter-spacing:.1em; opacity:.78; }
+    .screen-schedule-large .row .roomcell .value { font-size: calc(14px * var(--fs-all) * var(--fs-body)); font-weight:900; margin-top:1px; }
+    .screen-schedule-large .row .roomcell.now { align-items:center; }
+    .screen-schedule-large .row .roomcell.now .value { font-size: calc(13px * var(--fs-all) * var(--fs-body)); margin-top:0; }
+    .screen-schedule-large .row .title { font-size: calc(15px * var(--fs-all) * var(--fs-body)); border-left:2px solid var(--black); border-right:2px solid var(--black); height:100%; display:flex; align-items:center; }
+    .screen-schedule-small { padding:9px 10px; height:128px; }
+    .screen-schedule-small .head { display:flex; justify-content:space-between; align-items:center; height:22px; border-bottom:2px solid var(--black); }
+    .screen-schedule-small .rows { margin-top:6px; display:flex; flex-direction:column; gap:5px; }
+    .screen-schedule-small .row { display:grid; grid-template-columns: 50px 1fr; gap:7px; font-weight:900; font-size: calc(12px * var(--fs-all) * var(--fs-meta)); }
+
+    /* ---------- recording ---------- */
+    .screen-recording-large .stripe,
+    .screen-recording-small .stripe {
+      position:absolute; inset:0;
+      background: repeating-linear-gradient(135deg, var(--yellow) 0 18px, var(--red) 18px 36px);
+      opacity:.92;
+    }
+    .screen-recording-large .panel { position:absolute; left:28px; right:28px; top:38px; bottom:38px; background:var(--white); border:6px solid var(--black); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+    .screen-recording-large .rec { font-size: calc(22px * var(--fs-all) * var(--fs-title)); font-weight:900; letter-spacing:.16em; }
+    .screen-recording-large .main { font-size: calc(58px * var(--fs-all) * var(--fs-huge)); font-weight:900; margin-top:8px; }
+    .screen-recording-large .sub { font-size: calc(22px * var(--fs-all) * var(--fs-title)); font-weight:900; margin-top:8px; }
+    .screen-recording-small .panel { position:absolute; left:13px; right:13px; top:13px; bottom:13px; background:var(--white); border:4px solid var(--black); display:grid; grid-template-columns: 85px 1fr; align-items:center; text-align:center; }
+    .screen-recording-small .main { font-size: calc(31px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-recording-small .title { font-size: calc(16px * var(--fs-all) * var(--fs-body)); font-weight:900; padding-right:8px; text-align:left; }
+
+    /* ---------- agenda ---------- */
+    .screen-agenda-large { padding:18px; display:grid; grid-template-columns: 116px 1fr; gap:14px; height:300px; }
+    .screen-agenda-large .side { padding:12px; display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-agenda-large .side .jp { font-size: calc(31px * var(--fs-all) * var(--fs-huge)); font-weight:900; writing-mode:vertical-rl; align-self:center; letter-spacing:.08em; }
+    .screen-agenda-large .items { display:flex; flex-direction:column; gap:10px; justify-content:center; }
+    .screen-agenda-large .item { min-height:48px; display:grid; grid-template-columns: 42px 1fr; border:3px solid var(--black); align-items:center; font-weight:900; }
+    .screen-agenda-large .num { height:100%; display:flex; align-items:center; justify-content:center; border-right:3px solid var(--black); font-size: calc(20px * var(--fs-all) * var(--fs-title)); }
+    .screen-agenda-large .text { padding:0 12px; font-size: calc(20px * var(--fs-all) * var(--fs-title)); }
+    .screen-agenda-small { padding:10px; display:grid; grid-template-columns: 82px minmax(0,1fr); gap:9px; height:128px; }
+    .screen-agenda-small .side { display:flex; align-items:center; justify-content:center; text-align:center; font-weight:900; font-size: calc(18px * var(--fs-all) * var(--fs-title)); }
+    .screen-agenda-small .items { display:flex; flex-direction:column; gap:5px; justify-content:center; }
+    .screen-agenda-small .item { display:grid; grid-template-columns:30px minmax(0,1fr); border:2px solid var(--black); font-size: calc(12px * var(--fs-all) * var(--fs-meta)); font-weight:900; overflow:hidden; }
+    .screen-agenda-small .num { display:flex; align-items:center; justify-content:center; border-right:2px solid var(--black); }
+
+    /* ---------- room plate ---------- */
+    .screen-room-large { padding:18px; display:grid; grid-template-rows: 70px 1fr 46px; gap:12px; }
+    .screen-room-large .room { display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+    .screen-room-large .room .r { font-size: calc(39px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-room-large .middle { border:5px solid var(--black); padding:16px; display:flex; flex-direction:column; justify-content:center; }
+    .screen-room-large .title { font-size: calc(31px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-room-large .org { font-size: calc(17px * var(--fs-all) * var(--fs-body)); font-weight:800; margin-top:8px; }
+    .screen-room-large .foot { display:flex; align-items:center; justify-content:space-between; font-weight:900; }
+    .screen-room-small { height:128px; display:grid; grid-template-columns: 108px 1fr; }
+    .screen-room-small .room { display:flex; align-items:center; justify-content:center; font-size: calc(29px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-room-small .body { padding:9px 10px; display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-room-small .title { font-size: calc(18px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+
+    /* ---------- wayfinding ---------- */
+    .screen-way-large { padding:18px; display:grid; grid-template-columns: 132px minmax(0,1fr); gap:18px; height:300px; }
+    .screen-way-large .arrow { display:flex; align-items:center; justify-content:center; font-size: calc(95px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-way-large .body { display:flex; flex-direction:column; justify-content:center; }
+    .screen-way-large .dest { font-size: calc(32px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-way-large .title { font-size: calc(21px * var(--fs-all) * var(--fs-title)); font-weight:900; margin-top:10px; }
+    .screen-way-large .hint { margin-top:18px; border-top:4px solid var(--black); padding-top:12px; font-size: calc(17px * var(--fs-all) * var(--fs-body)); font-weight:800; }
+    .screen-way-small { height:128px; display:grid; grid-template-columns: 82px minmax(0,1fr); }
+    .screen-way-small .arrow { display:flex; align-items:center; justify-content:center; font-size: calc(60px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-way-small .body { padding:10px; display:flex; flex-direction:column; justify-content:center; }
+    .screen-way-small .dest { font-size: calc(17px * var(--fs-all) * var(--fs-body)); font-weight:900; }
+    .screen-way-small .title { font-size: calc(13px * var(--fs-all) * var(--fs-meta)); font-weight:900; margin-top:6px; }
+
+    /* ---------- ended ---------- */
+    .screen-ended-large { padding:18px; display:grid; grid-template-columns: 148px minmax(0,1fr); gap:14px; height:300px; }
+    .screen-ended-large .done { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+    .screen-ended-large .done .jp { font-size: calc(43px * var(--fs-all) * var(--fs-huge)); font-weight:900; }
+    .screen-ended-large .info { border:4px solid var(--black); padding:14px; display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-ended-large .title { font-size: calc(26px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-ended-large .memo { font-size: calc(17px * var(--fs-all) * var(--fs-body)); font-weight:800; }
+    .screen-ended-small { height:128px; display:grid; grid-template-columns: 92px minmax(0,1fr); }
+    .screen-ended-small .done { display:flex; align-items:center; justify-content:center; text-align:center; font-size: calc(24px * var(--fs-all) * var(--fs-title)); font-weight:900; }
+    .screen-ended-small .info { padding:10px; display:flex; flex-direction:column; justify-content:space-between; }
+    .screen-ended-small .title { font-size: calc(16px * var(--fs-all) * var(--fs-body)); font-weight:900; }
+
+    .screen-now-small .body, .screen-available-small .right, .screen-next-small .info,
+    .screen-join-large .info, .screen-join-small .info, .screen-schedule-small,
+    .screen-room-small .body, .screen-way-large .body, .screen-way-small .body,
+    .screen-ended-large .info, .screen-ended-small .info {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .screen-available-large .next, .screen-room-large .middle, .screen-schedule-large .row > div {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .screen-join-small .v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .screen-next-small .time, .screen-join-small .headline { max-width: 100%; overflow: hidden; text-overflow: clip; }
+    .epaper .wrap {
+      white-space: pre-line;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .screen-agenda-small .item > div:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+    @media (max-width: 720px) {
+      .epaper-stage { min-height: 260px; padding: 18px 8px 24px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- MUI + React UMD. No npm / no build step / no JSX transpiler. -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@emotion/react@11.11.4/dist/emotion-react.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@emotion/styled@11.11.5/dist/emotion-styled.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@mui/material@5.15.20/umd/material-ui.production.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js" crossorigin="anonymous"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  if (!window.React || !window.ReactDOM || !window.MaterialUI) {
+    document.getElementById('root').innerHTML =
+      '<div style="font-family:sans-serif;padding:24px">React / MUI のCDN読み込みに失敗しました。インターネット接続を確認してください。</div>';
+    return;
+  }
+
+  const h = React.createElement;
+  const {
+    ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography,
+    Container, Grid, Card, CardContent, TextField, Select, MenuItem,
+    FormControl, InputLabel, Tabs, Tab, Chip, Stack, Button, Slider,
+    Switch, FormControlLabel, Divider, Paper, Box, CircularProgress
+  } = MaterialUI;
+
+  const fontOptions = [
+    {
+      label: 'LINE Seed JP',
+      value: 'line',
+      css: '"LINE Seed JP", "Noto Sans JP", system-ui, sans-serif',
+      note: ''
+    },
+    {
+      label: 'Roboto + JP fallback',
+      value: 'roboto',
+      css: '"Roboto", "Noto Sans JP", system-ui, sans-serif',
+      note: ''
+    },
+    {
+      label: 'Noto Sans JP',
+      value: 'noto',
+      css: '"Noto Sans JP", system-ui, sans-serif',
+      note: ''
+    },
+    {
+      label: 'M PLUS 1p',
+      value: 'mplus',
+      css: '"M PLUS 1p", "Noto Sans JP", system-ui, sans-serif',
+      note: ''
+    },
+    {
+      label: 'BIZ UDPGothic',
+      value: 'biz',
+      css: '"BIZ UDPGothic", "Noto Sans JP", system-ui, sans-serif',
+      note: ''
+    }
+  ];
+
+  const screens = [
+    { id: 'now', label: '会議中', hint: '赤帯で遠目にも状態を伝える' },
+    { id: 'available', label: '空室', hint: '次の予約も同時表示' },
+    { id: 'next', label: '次の会議', hint: '開始時刻を大きく固定表示' },
+    { id: 'join', label: 'QR参加', hint: 'QR / ID / パスコード' },
+    { id: 'schedule', label: '本日の予定', hint: '予定一覧・進行中ハイライト' },
+    { id: 'recording', label: '録画中', hint: '注意喚起を強めた表示' },
+    { id: 'agenda', label: '議題', hint: '会議内の進行状況' },
+    { id: 'room', label: '会議室札', hint: '部屋・主催者・会議名' },
+    { id: 'way', label: '案内', hint: '矢印で誘導' },
+    { id: 'ended', label: '終了', hint: '終了後の次アクション' }
+  ];
+
+  const initialData = {
+    screen: 'now',
+    panelSize: 'large',
+    font: 'line',
+    zoom: 1.0,
+    qrVisible: true,
+    frameColor: 'black',
+    fontScaleAll: 1,
+    fontScaleHuge: 1,
+    fontScaleTitle: 1,
+    fontScaleBody: 1,
+    fontScaleMeta: 1,
+
+    room: 'ROOM 3A',
+    title: 'プロジェクト定例',
+    statusText: '会議中',
+    statusSub: 'MEETING IN PROGRESS',
+    date: '2026.05.21 Thu',
+    start: '12:00',
+    end: '13:00',
+    organizer: 'YAMADA TARO',
+    attendees: '12',
+
+    nextTitle: '次回：営業レビュー',
+    nextTime: '14:00 - 15:00',
+
+    meetingUrl: 'https://meet.example.com/abc-defg-hij',
+    meetingId: '123 456 7890',
+    passcode: '0429',
+    wifi: 'Guest-WiFi',
+    qrLabel: 'SCAN TO JOIN',
+
+    agenda1: '状況共有',
+    agenda2: '課題確認',
+    agenda3: '次アクション',
+
+    location: '← Conference Area',
+    memo: '終了後、議事録を共有します',
+    schedule: '10:00 朝会\n13:00 プロジェクト定例\n15:30 デザイン確認\n17:00 振り返り'
+  };
+
+  function currentFont(data) {
+    return fontOptions.find(f => f.value === data.font) || fontOptions[0];
+  }
+
+
+  function scaleValue(data, key, fallback) {
+    const n = Number(data && data[key]);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(0.7, Math.min(1.4, n));
+  }
+
+  function scaleKeyForFont(px) {
+    if (px >= 30) return 'fontScaleHuge';
+    if (px >= 18) return 'fontScaleTitle';
+    if (px >= 13) return 'fontScaleBody';
+    return 'fontScaleMeta';
+  }
+
+  function scaledFont(data, px, key) {
+    const all = scaleValue(data, 'fontScaleAll', 1);
+    const category = scaleValue(data, key || scaleKeyForFont(px), 1);
+    return Math.round(px * all * category * 10) / 10;
+  }
+
+  function cssScaleVars(data) {
+    return {
+      '--fs-all': scaleValue(data, 'fontScaleAll', 1),
+      '--fs-huge': scaleValue(data, 'fontScaleHuge', 1),
+      '--fs-title': scaleValue(data, 'fontScaleTitle', 1),
+      '--fs-body': scaleValue(data, 'fontScaleBody', 1),
+      '--fs-meta': scaleValue(data, 'fontScaleMeta', 1)
+    };
+  }
+
+  function normalizeText(value) {
+    return String(value == null ? '' : value).replace(/\\n/g, '\n').replace(/\r\n?/g, '\n');
+  }
+
+  function clip(value, fallback) {
+    const text = normalizeText(value).trim();
+    return text || fallback || '';
+  }
+
+  function shortText(value, max) {
+    const text = clip(value);
+    if (text.length <= max) return text;
+    return text.slice(0, Math.max(0, max - 1)) + '…';
+  }
+
+  function joinDescription(parts, separator) {
+    const values = parts.map(v => normalizeText(v).trim()).filter(Boolean);
+    if (!values.length) return '';
+    return values.some(v => v.includes('\\n')) ? values.join('\\n') : values.join(separator || ' ・ ');
+  }
+
+
+  function scheduleRows(text) {
+    const rows = String(text || '').split('\n').map(s => s.trim()).filter(Boolean);
+    if (!rows.length) return ['10:00 朝会', '13:00 プロジェクト定例'];
+    return rows;
+  }
+
+  function parseScheduleRow(row) {
+    const m = row.match(/^(\d{1,2}:\d{2})\s*(.*)$/);
+    if (!m) return { time: '--:--', title: row };
+    return { time: m[1], title: m[2] || row };
+  }
+
+  function roomDisplay(room) {
+    const t = clip(room, '').trim();
+    if (!t) return '';
+    const m = t.match(/(?:ROOM|RM|会議室)\s*[:：-]?\s*(.+)$/i);
+    return m ? m[1].trim() : t;
+  }
+
+  function scheduleRoomCell(room, isNow) {
+    if (isNow) {
+      return h('div', { className: 'roomcell now' }, [
+        h('div', { className: 'value mono' }, 'NOW')
+      ]);
+    }
+    const code = roomDisplay(room) || '—';
+    return h('div', { className: 'roomcell' }, [
+      h('div', { className: 'label mono' }, 'ROOM'),
+      h('div', { className: 'value mono' }, shortText(code, 8))
+    ]);
+  }
+
+  function hashString(value) {
+    let hval = 2166136261;
+    const s = String(value || '');
+    for (let i = 0; i < s.length; i++) {
+      hval ^= s.charCodeAt(i);
+      hval = Math.imul(hval, 16777619);
+    }
+    return hval >>> 0;
+  }
+
+  function FakeQR(props) {
+    const size = props.size || 96;
+    const value = String(props.value || 'https://example.com');
+
+    if (window.qrcode) {
+      try {
+        const qr = window.qrcode(0, 'M');
+        qr.addData(value);
+        qr.make();
+        const N = qr.getModuleCount();
+        const cells = [];
+
+        for (let y = 0; y < N; y++) {
+          for (let x = 0; x < N; x++) {
+            if (qr.isDark(y, x)) {
+              cells.push(h('rect', { key: x + '-' + y, x, y, width: 1, height: 1, fill: 'var(--black)' }));
+            }
+          }
+        }
+
+        return h('svg', {
+          className: 'qr',
+          width: size,
+          height: size,
+          viewBox: '0 0 ' + N + ' ' + N,
+          role: 'img',
+          'aria-label': 'QR code',
+          style: { shapeRendering: 'crispEdges' }
+        }, [
+          h('rect', { key: 'bg', x: 0, y: 0, width: N, height: N, fill: 'var(--white)' })
+        ].concat(cells));
+      } catch (e) {
+        // Fall through to deterministic visual fallback.
+      }
+    }
+
+    const seed = hashString(value);
+    const N = 21;
+    const cells = [];
+
+    function bit(x, y) {
+      const n = Math.imul((x + 11) * 1103515245 ^ (y + 17) * 12345 ^ seed, 2654435761);
+      return ((n >>> 27) & 1) === 1;
+    }
+
+    function inFinder(x, y) {
+      return (x < 7 && y < 7) || (x >= 14 && y < 7) || (x < 7 && y >= 14);
+    }
+
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        if (inFinder(x, y)) continue;
+        if (x === 6 || y === 6 || bit(x, y)) {
+          cells.push(h('rect', { key: x + '-' + y, x, y, width: 1, height: 1, fill: 'var(--black)' }));
+        }
+      }
+    }
+
+    function finder(x, y, key) {
+      return h('g', { key, transform: 'translate(' + x + ' ' + y + ')' }, [
+        h('rect', { key: 'a', x: 0, y: 0, width: 7, height: 7, fill: 'var(--black)' }),
+        h('rect', { key: 'b', x: 1, y: 1, width: 5, height: 5, fill: 'var(--white)' }),
+        h('rect', { key: 'c', x: 2, y: 2, width: 3, height: 3, fill: 'var(--black)' })
+      ]);
+    }
+
+    return h('svg', {
+      className: 'qr',
+      width: size,
+      height: size,
+      viewBox: '0 0 21 21',
+      role: 'img',
+      'aria-label': 'QR preview',
+      style: { shapeRendering: 'crispEdges' }
+    }, [
+      h('rect', { key: 'bg', x: 0, y: 0, width: 21, height: 21, fill: 'var(--white)' }),
+      finder(0, 0, 'f1'),
+      finder(14, 0, 'f2'),
+      finder(0, 14, 'f3')
+    ].concat(cells));
+  }
+
+  function Mono(props) {
+    return h('span', Object.assign({}, props, { className: ('mono ' + (props.className || '')).trim() }), props.children);
+  }
+
+
+  function MeetingNow(data, small) {
+    if (small) {
+      return h('div', { className: 'screen-now-small' }, [
+        h('div', { key: 'side', className: 'side red' }, [
+          h('div', { key: 'jp', className: 'jp' }, shortText(data.statusText, 4)),
+          h(Mono, { key: 'en', className: 'caps', style: { fontSize: scaledFont(data, 8), fontWeight: 900 } }, shortText(data.statusSub, 18)),
+          h('div', { key: 'att', style: { fontSize: scaledFont(data, 11), fontWeight: 900 } }, clip(data.attendees, '0') + '名')
+        ]),
+        h('div', { key: 'body', className: 'body' }, [
+          h('div', { key: 'room', className: 'room mono caps' }, shortText(data.room, 16)),
+          h('div', { key: 'title', className: 'title no-wrap' }, shortText(data.title, 15)),
+          h('div', { key: 'time', className: 'time' }, clip(data.start, '00:00') + '–' + clip(data.end, '00:00')),
+          h('div', { key: 'org', className: 'mono', style: { fontSize: scaledFont(data, 9), fontWeight: 800 } }, shortText(data.organizer, 22))
+        ])
+      ]);
+    }
+    return h('div', { className: 'screen-now-large' }, [
+      h('div', { key: 'top', className: 'topbar black' }, [
+        h(Mono, { key: 'room', className: 'caps', style: { fontSize: scaledFont(data, 16) } }, shortText(data.room, 18)),
+        h(Mono, { key: 'date', style: { fontSize: scaledFont(data, 13) } }, shortText(data.date, 22))
+      ]),
+      h('div', { key: 'status', className: 'status red' }, [
+        h('div', { key: 'wrap' }, [
+          h('div', { key: 'jp', className: 'status-main' }, shortText(data.statusText, 8)),
+          h(Mono, { key: 'en', className: 'caps', style: { fontSize: scaledFont(data, 12), fontWeight: 900 } }, shortText(data.statusSub, 28))
+        ])
+      ]),
+      h('div', { key: 'title', className: 'title no-wrap' }, shortText(data.title, 18)),
+      h('div', { key: 'time', className: 'timebar yellow' }, [
+        h('span', { key: 't', style: { fontSize: scaledFont(data, 25) } }, clip(data.start, '00:00') + ' - ' + clip(data.end, '00:00')),
+        h('span', { key: 'n', style: { fontSize: scaledFont(data, 15) } }, clip(data.attendees, '0') + '名')
+      ]),
+      h('div', { key: 'foot', className: 'footer mono' }, [
+        h('span', { key: 'org' }, shortText(data.organizer, 24)),
+        h('span', { key: 'wifi' }, shortText(data.wifi, 18))
+      ])
+    ]);
+  }
+
+  function Available(data, small) {
+    if (small) {
+      return h('div', { className: 'screen-available-small' }, [
+        h('div', { key: 'left', className: 'left yellow' }, [
+          h('div', { className: 'jp' }, '空室'),
+          h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 8), fontWeight: 900, marginTop: 4 } }, 'AVAILABLE')
+        ]),
+        h('div', { key: 'right', className: 'right', style: { paddingTop: 12, paddingBottom: 12 } }, [
+          h(Mono, { key: 'room', className: 'caps', style: { fontSize: scaledFont(data, 10), fontWeight: 900 } }, shortText(data.room, 16)),
+          h('div', { key: 'next' }, [
+            h('div', { className: 'mono caps', style: { fontSize: scaledFont(data, 8), fontWeight: 900, opacity: .65 } }, 'NEXT'),
+            h('div', { className: 'wrap', style: { fontSize: scaledFont(data, 13), fontWeight: 900, lineHeight: 1.05, marginTop: 2, maxHeight: 28 } }, shortText(data.nextTitle, 18)),
+            h('div', { className: 'mono', style: { fontSize: scaledFont(data, 12), fontWeight: 900, marginTop: 5 } }, shortText(data.nextTime, 16))
+          ])
+        ])
+      ]);
+    }
+    return h('div', { className: 'screen-available-large' }, [
+      h('div', { key: 'hero', className: 'hero yellow' }, [
+        h('div', { key: 'jp', className: 'jp' }, '空室'),
+        h('div', { key: 'right', style: { textAlign: 'right' } }, [
+          h(Mono, { key: 'en', className: 'en caps' }, 'AVAILABLE'),
+          h('div', { key: 'room', style: { fontSize: scaledFont(data, 14), fontWeight: 900, marginTop: 3 } }, shortText(data.room, 22))
+        ])
+      ]),
+      h('div', { key: 'center', className: 'center' }, [
+        h('div', { key: 'empty', className: 'empty' }, [
+          h('div', { className: 'big wrap' }, '使用可'),
+          h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 12), fontWeight: 900, marginTop: 8 } }, 'READY TO USE')
+        ]),
+        h('div', { key: 'next', className: 'next', style: { gap: 8 } }, [
+          h(Mono, { key: 'label', className: 'caps', style: { fontSize: scaledFont(data, 10), fontWeight: 900 } }, 'NEXT MEETING'),
+          h('div', { key: 'title', className: 'wrap next-title', style: { fontSize: scaledFont(data, 15), fontWeight: 900, lineHeight: 1.05, minHeight: 46, display: 'flex', alignItems: 'flex-start' } }, shortText(data.nextTitle, 24)),
+          h('div', { key: 'time', className: 'yellow mono wrap', style: { padding: '8px 10px', fontSize: scaledFont(data, 16), fontWeight: 900, marginTop: 'auto', lineHeight: 1.1 } }, shortText(data.nextTime, 22))
+        ])
+      ])
+    ]);
+  }
+
+  function NextMeeting(data, small) {
+    if (small) {
+      return h('div', {
+        className: 'screen-next-small',
+        style: { gridTemplateColumns: '108px minmax(0,1fr)', gap: 8, padding: '10px 12px 10px 10px' }
+      }, [
+        h('div', {
+          key: 'time',
+          className: 'time',
+          style: {
+            borderRight: '2px solid var(--black)',
+            paddingRight: 8,
+            justifyContent: 'center',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            fontSize: scaledFont(data, 32),
+            letterSpacing: '-.04em'
+          }
+        }, shortText(data.start, 5)),
+        h('div', { key: 'info', className: 'info', style: { minWidth: 0, paddingLeft: 4, justifyContent: 'center', gap: 6 } }, [
+          h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 7), fontWeight: 900, opacity: .72, letterSpacing: '.16em' } }, 'NEXT MEETING'),
+          h('div', { className: 'wrap', style: { fontSize: scaledFont(data, 13), fontWeight: 900, lineHeight: 1.06, maxHeight: 30 } }, shortText(data.title, 18)),
+          h('div', { className: 'yellow mono wrap', style: { fontSize: scaledFont(data, 9), fontWeight: 900, padding: '5px 7px', lineHeight: 1.12, maxHeight: 28 } }, shortText(joinDescription([data.room, data.organizer], ' ・ '), 30))
+        ])
+      ]);
+    }
+    return h('div', { style: { display: 'grid', gridTemplateColumns: '172px 1fr', gap: '14px', height: '300px', padding: '18px 18px 18px 28px' } }, [
+      h('div', { key: 'left', style: { borderRight: '4px solid var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', fontSize: scaledFont(data, 46), fontWeight: 900, lineHeight: .9, paddingRight: 22, paddingLeft: 8, letterSpacing: '-.04em', whiteSpace: 'nowrap' } }, shortText(data.start, 5)),
+      h('div', { key: 'right', style: { display: 'flex', flexDirection: 'column', minWidth: 0 } }, [
+        h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 11), fontWeight: 900, letterSpacing: '.18em' } }, 'NEXT MEETING'),
+        h('div', { className: 'wrap', style: { fontSize: scaledFont(data, 21), fontWeight: 900, lineHeight: 1.03, marginTop: 16, minHeight: 72 } }, shortText(data.title, 26)),
+        h('div', { className: 'yellow mono wrap', style: { fontSize: scaledFont(data, 13), fontWeight: 900, padding: '9px 12px', lineHeight: 1.18, marginTop: 'auto' } }, shortText(joinDescription([data.room, data.organizer], ' ・ '), 46)),
+        h('div', { className: 'mono', style: { fontSize: scaledFont(data, 14), fontWeight: 900, marginTop: 10 } }, clip(data.start, '00:00') + ' - ' + clip(data.end, '00:00'))
+      ])
+    ]);
+  }
+
+  function JoinInfo(data, small) {
+    const qrSize = small ? 70 : 118;
+    if (small) {
+      const label = shortText(data.qrLabel || 'QR参加', 16);
+      return h('div', {
+        className: 'screen-join-small',
+        style: { gridTemplateColumns: '88px minmax(0,1fr)', gap: 10, alignItems: 'center', padding: '10px 12px' }
+      }, [
+        h('div', { key: 'qr', style: { display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+          data.qrVisible ? h(FakeQR, { value: data.meetingUrl + data.meetingId, size: qrSize }) :
+            h('div', { className: 'outline', style: { width: qrSize, height: qrSize, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: scaledFont(data, 10) } }, 'QR OFF')
+        ),
+        h('div', { key: 'info', className: 'info', style: { minWidth: 0, gap: 5, justifyContent: 'center' } }, [
+          h('div', { className: 'headline no-wrap', style: { fontSize: scaledFont(data, 13), lineHeight: 1.05, maxWidth: '100%', letterSpacing: '.02em' } }, label),
+          h('div', { className: 'mono no-wrap', style: { fontSize: scaledFont(data, 10), fontWeight: 900, lineHeight: 1.1, maxWidth: '100%' } }, 'ID ' + shortText(data.meetingId, 18)),
+          h('div', { className: 'mono no-wrap', style: { fontSize: scaledFont(data, 10), fontWeight: 900, lineHeight: 1.1, maxWidth: '100%' } }, 'PASS ' + shortText(data.passcode, 10)),
+          h('div', { className: 'yellow mono no-wrap', style: { padding: '3px 6px', fontSize: scaledFont(data, 7), fontWeight: 900, lineHeight: 1.05, display: 'inline-block', alignSelf: 'flex-start', maxWidth: '100%' } }, label)
+        ])
+      ]);
+    }
+    return h('div', { className: 'screen-join-large', style: { gridTemplateColumns: '150px 1fr', gap: 18, alignItems: 'center' } }, [
+      h('div', { key: 'qrbox', className: 'qrbox', style: { gap: 10 } }, [
+        data.qrVisible ? h(FakeQR, { key: 'qr', value: data.meetingUrl + data.meetingId, size: qrSize }) :
+          h('div', { key: 'off', className: 'outline', style: { width: qrSize, height: qrSize, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 } }, 'QR OFF'),
+        h(Mono, { key: 'label', className: 'caps', style: { fontSize: scaledFont(data, 9), fontWeight: 900 } }, shortText(data.qrLabel, 18))
+      ]),
+      h('div', { key: 'info', className: 'info', style: { minWidth: 0, gap: 10 } }, [
+        h('div', { key: 'head' }, [
+          h('div', { className: 'headline wrap', style: { fontSize: scaledFont(data, 20), lineHeight: 1.02 } }, shortText(data.qrLabel || 'QR参加', 18)),
+          h('div', { className: 'mono wrap', style: { fontSize: scaledFont(data, 10), fontWeight: 900, marginTop: 8, lineHeight: 1.15, opacity: .75 } }, shortText(data.meetingUrl, 52))
+        ]),
+        h('div', { key: 'kv1', className: 'kv' }, [
+          h('div', { className: 'k mono caps' }, 'MEETING ID'),
+          h('div', { className: 'v mono wrap', style: { lineHeight: 1.1, fontSize: scaledFont(data, 20) } }, shortText(data.meetingId, 22))
+        ]),
+        h('div', { key: 'kv2', className: 'kv yellow' }, [
+          h('div', { className: 'k mono caps' }, 'PASSCODE'),
+          h('div', { className: 'v mono wrap', style: { lineHeight: 1.1, fontSize: scaledFont(data, 20) } }, shortText(data.passcode, 14))
+        ])
+      ])
+    ]);
+  }
+
+  function Schedule(data, small) {
+    const rows = scheduleRows(data.schedule).slice(0, small ? 3 : 5);
+    if (small) {
+      return h('div', { className: 'screen-schedule-small' }, [
+        h('div', { key: 'head', className: 'head' }, [
+          h('div', { style: { fontWeight: 900, fontSize: scaledFont(data, 15) } }, '本日の予定'),
+          h(Mono, { style: { fontSize: scaledFont(data, 9), fontWeight: 900 } }, shortText(data.room, 14))
+        ]),
+        h('div', { key: 'rows', className: 'rows' }, rows.map((row, i) => {
+          const p = parseScheduleRow(row);
+          return h('div', { key: i, className: 'row ' + (i === 1 ? 'yellow' : '') }, [
+            h('div', { key: 't', className: 'mono' }, p.time),
+            h('div', { key: 'n', className: 'no-wrap' }, shortText(p.title, 17))
+          ]);
+        }))
+      ]);
+    }
+    return h('div', { className: 'screen-schedule-large' }, [
+      h('div', { key: 'head', className: 'head' }, [
+        h('div', { className: 'jp' }, '本日の予定'),
+        h(Mono, { style: { fontSize: scaledFont(data, 13), fontWeight: 900 } }, shortText(data.date, 18))
+      ]),
+      h('div', { key: 'rows', className: 'rows' }, rows.map((row, i) => {
+        const p = parseScheduleRow(row);
+        return h('div', { key: i, className: 'row ' + (i === 1 ? 'yellow' : '') }, [
+          h('div', { key: 'time', className: 'time mono' }, p.time),
+          h('div', { key: 'title', className: 'title no-wrap' }, shortText(p.title, 22)),
+          h('div', { key: 'room', className: 'mono' }, scheduleRoomCell(p.room || data.room, i === 1))
+        ]);
+      }))
+    ]);
+  }
+
+  function Recording(data, small) {
+    if (small) {
+      return h('div', { className: 'screen-recording-small' }, [
+        h('div', { key: 's', className: 'stripe' }),
+        h('div', { key: 'p', className: 'panel' }, [
+          h('div', { key: 'main', className: 'main' }, 'REC'),
+          h('div', { key: 'title', className: 'title no-wrap' }, shortText(data.title, 17))
+        ])
+      ]);
+    }
+    return h('div', { className: 'screen-recording-large' }, [
+      h('div', { key: 's', className: 'stripe' }),
+      h('div', { key: 'p', className: 'panel' }, [
+        h(Mono, { key: 'rec', className: 'rec caps' }, '● RECORDING'),
+        h('div', { key: 'main', className: 'main' }, '録画中'),
+        h('div', { key: 'sub', className: 'sub no-wrap' }, shortText(data.title, 16))
+      ])
+    ]);
+  }
+
+  function Agenda(data, small) {
+    const items = [data.agenda1, data.agenda2, data.agenda3].map((x, i) => clip(x, 'Agenda ' + (i + 1)));
+    if (small) {
+      return h('div', { className: 'screen-agenda-small', style: { gridTemplateColumns: '78px 1fr', gap: 8 } }, [
+        h('div', { key: 'side', className: 'side black', style: { flexDirection: 'column', justifyContent: 'space-between', padding: '10px 6px' } }, [
+          h('div', { style: { fontSize: scaledFont(data, 20), fontWeight: 900, lineHeight: 1, textAlign: 'center' } }, '議題'),
+          h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 8), fontWeight: 900 } }, 'AGENDA')
+        ]),
+        h('div', { key: 'items', className: 'items', style: { gap: 6 } }, items.map((item, i) =>
+          h('div', { key: i, className: 'item ' + (i === 1 ? 'yellow' : ''), style: { gridTemplateColumns: '28px 1fr', minHeight: 28 } }, [
+            h('div', { key: 'n', className: 'num mono' }, '0' + (i + 1)),
+            h('div', { key: 't', className: 'wrap', style: { padding: '5px 6px', lineHeight: 1.05 } }, shortText(item, 16))
+          ])
+        ))
+      ]);
+    }
+    return h('div', { className: 'screen-agenda-large', style: { gridTemplateColumns: '108px 1fr', gap: 16 } }, [
+      h('div', { key: 'side', className: 'side black', style: { padding: '16px 10px', alignItems: 'flex-start' } }, [
+        h('div', { className: 'wrap', style: { fontSize: scaledFont(data, 34), fontWeight: 900, lineHeight: .95 } }, '議題'),
+        h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 11), fontWeight: 900, marginTop: 'auto' } }, 'AGENDA')
+      ]),
+      h('div', { key: 'items', className: 'items', style: { gap: 12 } }, items.map((item, i) =>
+        h('div', { key: i, className: 'item ' + (i === 1 ? 'yellow' : ''), style: { gridTemplateColumns: '54px 1fr', minHeight: 56 } }, [
+          h('div', { key: 'n', className: 'num mono' }, '0' + (i + 1)),
+          h('div', { key: 't', className: 'text wrap', style: { display: 'flex', alignItems: 'center', lineHeight: 1.05 } }, shortText(item, 22))
+        ])
+      ))
+    ]);
+  }
+
+  function RoomPlate(data, small) {
+    if (small) {
+      return h('div', { className: 'screen-room-small' }, [
+        h('div', { key: 'room', className: 'room black' }, shortText(data.room, 8)),
+        h('div', { key: 'body', className: 'body' }, [
+          h('div', { className: 'title wrap', style: { lineHeight: 1.04 } }, shortText(data.title, 17)),
+          h('div', { className: 'mono', style: { fontSize: scaledFont(data, 10), fontWeight: 900 } }, shortText(data.organizer, 20)),
+          h('div', { className: 'yellow mono no-wrap', style: { padding: '4px 6px', fontSize: scaledFont(data, 10), fontWeight: 900 } }, clip(data.start, '00:00') + ' - ' + clip(data.end, '00:00'))
+        ])
+      ]);
+    }
+    return h('div', { className: 'screen-room-large' }, [
+      h('div', { key: 'room', className: 'room black' }, [
+        h('div', { className: 'r' }, shortText(data.room, 12)),
+        h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 12), fontWeight: 900 } }, 'ROOM PLATE')
+      ]),
+      h('div', { key: 'mid', className: 'middle' }, [
+        h('div', { className: 'title wrap', style: { lineHeight: 1.02 } }, shortText(data.title, 20)),
+        h('div', { className: 'org mono wrap', style: { lineHeight: 1.08 } }, shortText(data.organizer, 30))
+      ]),
+      h('div', { key: 'foot', className: 'foot' }, [
+        h('span', { className: 'mono' }, clip(data.start, '00:00') + ' - ' + clip(data.end, '00:00')),
+        h('span', null, shortText(data.date, 18))
+      ])
+    ]);
+  }
+
+  function Wayfinding(data, small) {
+    const arrow = (clip(data.location).startsWith('→') || clip(data.location).includes('右')) ? '→' : '←';
+    const dest = clip(data.location, '← Conference Area').replace(/[←→]/g, '').trim() || 'Conference Area';
+
+    if (small) {
+      return h('div', { className: 'screen-way-small', style: { gridTemplateColumns: '80px 1fr' } }, [
+        h('div', { key: 'arrow', className: 'arrow yellow' }, arrow),
+        h('div', { key: 'body', className: 'body', style: { minWidth: 0 } }, [
+          h('div', { className: 'dest wrap', style: { fontSize: scaledFont(data, 18), lineHeight: 1 } }, shortText(dest, 18)),
+          h('div', { className: 'title wrap', style: { marginTop: 6, lineHeight: 1.05 } }, shortText(data.title, 16)),
+          h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 8), fontWeight: 900, marginTop: 8 } }, shortText(data.room + ' ・ ' + data.start, 20))
+        ])
+      ]);
+    }
+    return h('div', { className: 'screen-way-large', style: { gridTemplateColumns: '136px 1fr' } }, [
+      h('div', { key: 'arrow', className: 'arrow yellow' }, arrow),
+      h('div', { key: 'body', className: 'body', style: { minWidth: 0, justifyContent: 'center' } }, [
+        h('div', { className: 'dest wrap', style: { fontSize: scaledFont(data, 32), lineHeight: .98 } }, shortText(dest, 20)),
+        h('div', { className: 'title wrap', style: { fontSize: scaledFont(data, 22), lineHeight: 1.05, marginTop: 14 } }, shortText(data.title, 24)),
+        h('div', { className: 'hint mono wrap', style: { lineHeight: 1.15 } }, shortText(data.room + ' ・ ' + data.start, 28))
+      ])
+    ]);
+  }
+
+  function Ended(data, small) {
+    if (small) {
+      return h('div', { className: 'screen-ended-small' }, [
+        h('div', { key: 'done', className: 'done black', style: { flexDirection: 'column', lineHeight: 1 } }, [
+          h('div', null, '終了'),
+          h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 7), fontWeight: 900, marginTop: 4 } }, 'END')
+        ]),
+        h('div', { key: 'info', className: 'info', style: { minWidth: 0 } }, [
+          h('div', { className: 'mono caps', style: { fontSize: scaledFont(data, 8), fontWeight: 900 } }, 'NEXT'),
+          h('div', { className: 'title wrap', style: { lineHeight: 1.06 } }, shortText(data.nextTitle, 18)),
+          h('div', { className: 'yellow mono wrap', style: { padding: '4px 6px', fontSize: scaledFont(data, 10), fontWeight: 900, lineHeight: 1.05 } }, shortText(data.nextTime, 18)),
+          h('div', { className: 'mono wrap', style: { fontSize: scaledFont(data, 8), fontWeight: 800, lineHeight: 1.1 } }, shortText(data.memo, 24))
+        ])
+      ]);
+    }
+    return h('div', { className: 'screen-ended-large', style: { gridTemplateColumns: '132px 1fr' } }, [
+      h('div', { key: 'done', className: 'done black' }, [
+        h('div', { className: 'jp' }, '終了'),
+        h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 12), fontWeight: 900, marginTop: 8 } }, 'MEETING ENDED')
+      ]),
+      h('div', { key: 'info', className: 'info', style: { minWidth: 0 } }, [
+        h(Mono, { className: 'caps', style: { fontSize: scaledFont(data, 11), fontWeight: 900 } }, 'NEXT MEETING'),
+        h('div', { className: 'title wrap', style: { lineHeight: 1.05, minHeight: 66, display: 'flex', alignItems: 'flex-start' } }, shortText(data.nextTitle, 24)),
+        h('div', { className: 'yellow mono wrap', style: { fontSize: scaledFont(data, 19), fontWeight: 900, padding: '8px 10px', lineHeight: 1.1 } }, shortText(data.nextTime, 20)),
+        h('div', { className: 'memo wrap', style: { lineHeight: 1.12 } }, shortText(data.memo, 34))
+      ])
+    ]);
+  }
+
+  function EpaperScreen(props) {
+    const data = props.data;
+    const small = data.panelSize === 'small';
+    const font = currentFont(data).css;
+    // 外側の .epaper に screen-xxx-small / large を付けると、内側用のCSSグリッドが外側にも当たり、
+    // 2.9inch表示で最初の列だけに押し込まれてしまう。画面別クラスは内側の各Screenコンポーネントだけに付ける。
+    const cls = 'epaper ' + (small ? 'ep-small' : 'ep-large');
+    let content;
+
+    switch (data.screen) {
+      case 'available': content = Available(data, small); break;
+      case 'next': content = NextMeeting(data, small); break;
+      case 'join': content = JoinInfo(data, small); break;
+      case 'schedule': content = Schedule(data, small); break;
+      case 'recording': content = Recording(data, small); break;
+      case 'agenda': content = Agenda(data, small); break;
+      case 'room': content = RoomPlate(data, small); break;
+      case 'way': content = Wayfinding(data, small); break;
+      case 'ended': content = Ended(data, small); break;
+      case 'now':
+      default: content = MeetingNow(data, small);
+    }
+
+    return h('div', {
+      ref: props.innerRef || null,
+      className: cls,
+      style: Object.assign({ fontFamily: font }, cssScaleVars(data))
+    }, content);
+  }
+
+  function Field(props) {
+    return h(Grid, { item: true, xs: props.xs || 12, sm: props.sm || props.xs || 6 }, [
+      h(TextField, {
+        key: props.name,
+        fullWidth: true,
+        size: 'small',
+        label: props.label,
+        value: props.value || '',
+        multiline: !!props.multiline,
+        minRows: props.minRows || undefined,
+        onChange: e => props.onChange(props.name, e.target.value)
+      })
+    ]);
+  }
+
+
+  function SizeSlider(props) {
+    const value = scaleValue({ [props.name]: props.value }, props.name, 1);
+    return h(Grid, { item: true, xs: props.xs || 12, sm: props.sm || props.xs || 6 }, [
+      h(Box, { sx: { px: .5 } }, [
+        h(Stack, { direction: 'row', justifyContent: 'space-between', alignItems: 'center', spacing: 1 }, [
+          h(Typography, { variant: 'caption', sx: { fontWeight: 800 } }, props.label),
+          h(Typography, { variant: 'caption', color: 'text.secondary' }, Math.round(value * 100) + '%')
+        ]),
+        h(Slider, {
+          value: value,
+          min: 0.85,
+          max: 1.2,
+          step: 0.01,
+          size: 'small',
+          marks: [
+            { value: 0.9, label: '90%' },
+            { value: 1, label: '100%' },
+            { value: 1.1, label: '110%' }
+          ],
+          onChange: (e, v) => props.onChange(props.name, v)
+        })
+      ])
+    ]);
+  }
+
+  function SettingsPanel(props) {
+    const data = props.data;
+    const setData = props.setData;
+    const importInputRef = React.useRef(null);
+    const update = (key, value) => setData(Object.assign({}, data, { [key]: value }));
+    const updateField = (key, value) => update(key, value);
+
+    const copyData = () => {
+      const text = JSON.stringify(data, null, 2);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+      } else {
+        window.prompt('コピーしてください', text);
+      }
+    };
+
+    const exportData = () => {
+      const payload = {
+        app: 'EZ Sign Online Meeting Sign Generator',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: data
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ezsign_online_meeting_data.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    const handleImportFile = (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || '{}'));
+          const importedData = parsed && parsed.data ? parsed.data : parsed;
+          if (!importedData || typeof importedData !== 'object' || Array.isArray(importedData)) {
+            throw new Error('データ形式が正しくありません');
+          }
+          setData(Object.assign({}, initialData, importedData));
+        } catch (err) {
+          window.alert('インポートに失敗しました: ' + (err && err.message ? err.message : err));
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.onerror = () => {
+        window.alert('ファイルの読み込みに失敗しました');
+        event.target.value = '';
+      };
+      reader.readAsText(file, 'utf-8');
+    };
+
+    return h(Stack, { spacing: 2 }, [
+      h(Card, { key: 'screen', variant: 'outlined', sx: { borderRadius: 1 } }, [
+        h(CardContent, { key: 'cc' }, [
+          h(Typography, { variant: 'h6', sx: { fontWeight: 900, mb: 1 } }, '画面タイプ'),
+          h(Tabs, {
+            value: data.screen,
+            onChange: (e, v) => update('screen', v),
+            variant: 'scrollable',
+            scrollButtons: 'auto',
+            sx: { mb: 1 }
+          }, screens.map(s => h(Tab, { key: s.id, value: s.id, label: s.label })))
+        ])
+      ]),
+
+      h(Card, { key: 'display', variant: 'outlined', sx: { borderRadius: 1 } }, [
+        h(CardContent, { key: 'cc' }, [
+          h(Typography, { variant: 'h6', sx: { fontWeight: 900, mb: 2 } }, '表示設定'),
+          h(Grid, { container: true, spacing: 2 }, [
+            h(Grid, { item: true, xs: 12, sm: 3, key: 'size' }, [
+              h(FormControl, { fullWidth: true, size: 'small' }, [
+                h(InputLabel, { id: 'panel-size-label' }, 'パネル'),
+                h(Select, {
+                  labelId: 'panel-size-label',
+                  label: 'パネル',
+                  value: data.panelSize,
+                  onChange: e => update('panelSize', e.target.value)
+                }, [
+                  h(MenuItem, { key: 'large', value: 'large' }, '4.2 inch / 400×300'),
+                  h(MenuItem, { key: 'small', value: 'small' }, '2.9 inch / 296×128')
+                ])
+              ])
+            ]),
+            h(Grid, { item: true, xs: 12, sm: 3, key: 'frameColor' }, [
+              h(FormControl, { fullWidth: true, size: 'small' }, [
+                h(InputLabel, { id: 'frame-color-label' }, '枠色'),
+                h(Select, {
+                  labelId: 'frame-color-label',
+                  label: '枠色',
+                  value: data.frameColor || 'black',
+                  onChange: e => update('frameColor', e.target.value)
+                }, [
+                  h(MenuItem, { key: 'black', value: 'black' }, '黒'),
+                  h(MenuItem, { key: 'white', value: 'white' }, '白'),
+                  h(MenuItem, { key: 'silver', value: 'silver' }, 'シルバー')
+                ])
+              ])
+            ]),
+            h(Grid, { item: true, xs: 12, sm: 4, key: 'font' }, [
+              h(FormControl, { fullWidth: true, size: 'small' }, [
+                h(InputLabel, { id: 'font-label' }, 'Webフォント'),
+                h(Select, {
+                  labelId: 'font-label',
+                  label: 'Webフォント',
+                  value: data.font,
+                  onChange: e => update('font', e.target.value)
+                }, fontOptions.map(f => h(MenuItem, { key: f.value, value: f.value }, f.label)))
+              ])
+            ]),
+            h(Grid, { item: true, xs: 12, sm: 2, key: 'qr' }, [
+              h(FormControlLabel, {
+                control: h(Switch, {
+                  checked: !!data.qrVisible,
+                  onChange: e => update('qrVisible', e.target.checked)
+                }),
+                label: 'QR表示'
+              })
+            ]),
+            h(Grid, { item: true, xs: 12, key: 'zoom' }, [
+              h(Typography, { variant: 'body2', sx: { fontWeight: 700 } }, 'プレビュー倍率: ' + data.zoom.toFixed(2) + 'x'),
+              h(Slider, {
+                value: data.zoom,
+                min: 0.7,
+                max: 1.6,
+                step: 0.05,
+                onChange: (e, v) => update('zoom', v)
+              })
+            ]),
+            h(Grid, { item: true, xs: 12, key: 'sizeScales' }, [
+              h(Typography, { variant: 'body2', sx: { fontWeight: 900, mb: 1 } }, '文字サイズ微調整'),
+              h(Grid, { container: true, spacing: 2 }, [
+                h(SizeSlider, { key: 'all', label: '全体', name: 'fontScaleAll', value: data.fontScaleAll, onChange: update, xs: 12, sm: 4 }),
+                h(SizeSlider, { key: 'huge', label: '大見出し', name: 'fontScaleHuge', value: data.fontScaleHuge, onChange: update, xs: 12, sm: 4 }),
+                h(SizeSlider, { key: 'title', label: '見出し', name: 'fontScaleTitle', value: data.fontScaleTitle, onChange: update, xs: 12, sm: 4 }),
+                h(SizeSlider, { key: 'body', label: '本文', name: 'fontScaleBody', value: data.fontScaleBody, onChange: update, xs: 12, sm: 6 }),
+                h(SizeSlider, { key: 'meta', label: '補足・小文字', name: 'fontScaleMeta', value: data.fontScaleMeta, onChange: update, xs: 12, sm: 6 })
+              ])
+            ])
+          ])
+        ])
+      ]),
+
+      h(Card, { key: 'input', variant: 'outlined', sx: { borderRadius: 1 } }, [
+        h(CardContent, { key: 'cc' }, [
+          h(Typography, { variant: 'h6', sx: { fontWeight: 900, mb: .5 } }, '内容入力'),
+          h(Typography, { variant: 'body2', color: 'text.secondary', sx: { mb: 2 } }, '文字列に \\n を入れると、プレビューでは改行として表示します。'),
+          h(Grid, { container: true, spacing: 2 }, [
+            h(Field, { key: 'room', name: 'room', label: '会議室 / 場所', value: data.room, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'title', name: 'title', label: '会議タイトル', value: data.title, onChange: updateField, xs: 12, sm: 8 }),
+            h(Field, { key: 'statusText', name: 'statusText', label: 'ステータス日本語', value: data.statusText, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'statusSub', name: 'statusSub', label: 'ステータス英字', value: data.statusSub, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'date', name: 'date', label: '日付', value: data.date, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'start', name: 'start', label: '開始', value: data.start, onChange: updateField, xs: 6, sm: 3 }),
+            h(Field, { key: 'end', name: 'end', label: '終了', value: data.end, onChange: updateField, xs: 6, sm: 3 }),
+            h(Field, { key: 'organizer', name: 'organizer', label: '主催者', value: data.organizer, onChange: updateField, xs: 12, sm: 3 }),
+            h(Field, { key: 'attendees', name: 'attendees', label: '参加人数', value: data.attendees, onChange: updateField, xs: 12, sm: 3 }),
+            h(Field, { key: 'nextTitle', name: 'nextTitle', label: '次の会議名', value: data.nextTitle, onChange: updateField, xs: 12, sm: 6 }),
+            h(Field, { key: 'nextTime', name: 'nextTime', label: '次の会議時間', value: data.nextTime, onChange: updateField, xs: 12, sm: 6 }),
+            h(Field, { key: 'meetingUrl', name: 'meetingUrl', label: '参加URL / QR文字列', value: data.meetingUrl, onChange: updateField, xs: 12, sm: 8 }),
+            h(Field, { key: 'meetingId', name: 'meetingId', label: 'Meeting ID', value: data.meetingId, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'passcode', name: 'passcode', label: 'Passcode', value: data.passcode, onChange: updateField, xs: 6, sm: 3 }),
+            h(Field, { key: 'wifi', name: 'wifi', label: 'Wi-Fi / 補足', value: data.wifi, onChange: updateField, xs: 6, sm: 3 }),
+            h(Field, { key: 'qrLabel', name: 'qrLabel', label: 'QRラベル', value: data.qrLabel, onChange: updateField, xs: 12, sm: 6 }),
+            h(Field, { key: 'agenda1', name: 'agenda1', label: '議題 1', value: data.agenda1, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'agenda2', name: 'agenda2', label: '議題 2', value: data.agenda2, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'agenda3', name: 'agenda3', label: '議題 3', value: data.agenda3, onChange: updateField, xs: 12, sm: 4 }),
+            h(Field, { key: 'location', name: 'location', label: '案内先 / 矢印', value: data.location, onChange: updateField, xs: 12, sm: 6 }),
+            h(Field, { key: 'memo', name: 'memo', label: 'メモ', value: data.memo, onChange: updateField, xs: 12, sm: 6 }),
+            h(Field, { key: 'schedule', name: 'schedule', label: '本日の予定（1行1予定）', value: data.schedule, onChange: updateField, xs: 12, multiline: true, minRows: 4 })
+          ])
+        ])
+      ]),
+
+      h(Stack, { key: 'actions', direction: 'row', spacing: 1, flexWrap: 'wrap', useFlexGap: true }, [
+        h(Button, { key: 'reset', variant: 'outlined', onClick: () => setData(initialData) }, 'サンプルに戻す'),
+        h(Button, { key: 'export', variant: 'contained', onClick: exportData }, 'データをエクスポート'),
+        h(Button, {
+          key: 'import',
+          variant: 'outlined',
+          onClick: () => importInputRef.current && importInputRef.current.click()
+        }, 'データをインポート'),
+        h('input', {
+          key: 'importFile',
+          ref: importInputRef,
+          type: 'file',
+          accept: 'application/json,.json',
+          style: { display: 'none' },
+          onChange: handleImportFile
+        }),
+        h(Button, { key: 'copy', variant: 'text', onClick: copyData }, 'JSONコピー')
+      ])
+    ]);
+  }
+
+  function PreviewPanel(props) {
+    const data = props.data;
+    const setData = props.setData;
+    const small = data.panelSize === 'small';
+    const w = small ? 296 : 400;
+    const hgt = small ? 128 : 300;
+    const frame = small
+      ? { left: 34, right: 12, top: 12, bottom: 12 }
+      : { left: 16, right: 16, top: 16, bottom: 42 };
+    const deviceW = w + frame.left + frame.right + 2;
+    const deviceH = hgt + frame.top + frame.bottom + 2;
+    const frameColor = ['black', 'white', 'silver'].includes(data.frameColor) ? data.frameColor : 'black';
+    const selected = screens.find(s => s.id === data.screen) || screens[0];
+    const stageRef = React.useRef(null);
+    const deviceRef = React.useRef(null);
+    const screenRef = React.useRef(null);
+    const [stageWidth, setStageWidth] = React.useState(0);
+    const [isDownloading, setIsDownloading] = React.useState(false);
+
+    React.useEffect(() => {
+      const el = stageRef.current;
+      if (!el) return;
+      const updateWidth = () => setStageWidth(el.clientWidth || 0);
+      updateWidth();
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(updateWidth);
+        ro.observe(el);
+        return () => ro.disconnect();
+      }
+      window.addEventListener('resize', updateWidth);
+      return () => window.removeEventListener('resize', updateWidth);
+    }, []);
+
+    const requestedZoom = Math.max(0.6, Math.min(1.6, Number(data.zoom) || 1));
+    const fitLimit = stageWidth ? Math.max(0.5, (stageWidth - 24) / deviceW) : 1;
+    const displayScale = Math.min(requestedZoom, fitLimit);
+    const autoFit = displayScale < requestedZoom - 0.01;
+
+    const waitForPreviewPaint = async () => {
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch (e) {}
+      }
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    };
+
+    const replaceCssVarsInAttributes = (root, sourceNode) => {
+      const computed = window.getComputedStyle(sourceNode);
+      const map = {
+        'var(--black)': computed.getPropertyValue('--black').trim() || '#000000',
+        'var(--white)': computed.getPropertyValue('--white').trim() || '#ffffff',
+        'var(--red)': computed.getPropertyValue('--red').trim() || '#dc2626',
+        'var(--yellow)': computed.getPropertyValue('--yellow').trim() || '#facc15'
+      };
+      const attrs = ['fill', 'stroke', 'stop-color', 'color', 'background', 'background-color', 'border-color', 'box-shadow'];
+      root.querySelectorAll('*').forEach(el => {
+        attrs.forEach(attr => {
+          const value = el.getAttribute(attr);
+          if (!value || value.indexOf('var(') === -1) return;
+          let next = value;
+          Object.keys(map).forEach(key => { next = next.split(key).join(map[key]); });
+          el.setAttribute(attr, next);
+        });
+      });
+    };
+
+    const inlineComputedStyles = (source, clone) => {
+      if (!(source instanceof Element) || !(clone instanceof Element)) return;
+      const computed = window.getComputedStyle(source);
+      let styleText = '';
+      for (let i = 0; i < computed.length; i++) {
+        const prop = computed[i];
+        styleText += prop + ':' + computed.getPropertyValue(prop) + ';';
+      }
+      clone.setAttribute('style', styleText);
+
+      const sourceChildren = Array.from(source.children || []);
+      const cloneChildren = Array.from(clone.children || []);
+      for (let i = 0; i < sourceChildren.length; i++) {
+        inlineComputedStyles(sourceChildren[i], cloneChildren[i]);
+      }
+    };
+
+    const makePngFromNode = async (node, targetWidth, targetHeight, pixelRatio) => {
+      await waitForPreviewPaint();
+      const width = Math.ceil(targetWidth || node.offsetWidth || deviceW);
+      const height = Math.ceil(targetHeight || node.offsetHeight || deviceH);
+      pixelRatio = pixelRatio || 1;
+      const clone = node.cloneNode(true);
+      inlineComputedStyles(node, clone);
+      replaceCssVarsInAttributes(clone, node);
+      clone.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+      clone.style.margin = '0';
+      clone.style.transform = 'none';
+      clone.style.position = 'relative';
+      clone.style.left = '0';
+      clone.style.top = '0';
+      clone.style.width = width + 'px';
+      clone.style.height = height + 'px';
+
+      const serialized = new XMLSerializer().serializeToString(clone);
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
+        '<foreignObject x="0" y="0" width="100%" height="100%">' + serialized + '</foreignObject></svg>';
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+
+      try {
+        const img = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = reject;
+          image.src = url;
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = width * pixelRatio;
+        canvas.height = height * pixelRatio;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/png');
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    const downloadPreview = async () => {
+      // 実機へ書き込む画像は、外側の枠・実機余白を含めず、表示面だけを出力する。
+      // 2.9inch: 296×128 / 4.2inch: 400×300 の等倍PNG。
+      const node = screenRef.current;
+      if (!node || isDownloading) return;
+      setIsDownloading(true);
+      try {
+        let dataUrl;
+        try {
+          dataUrl = await makePngFromNode(node, w, hgt, 1);
+        } catch (primaryError) {
+          if (!window.htmlToImage || !window.htmlToImage.toPng) throw primaryError;
+          await waitForPreviewPaint();
+          dataUrl = await window.htmlToImage.toPng(node, {
+            cacheBust: true,
+            includeQueryParams: true,
+            pixelRatio: 1,
+            backgroundColor: '#fbfdff',
+            width: w,
+            height: hgt,
+            style: { transform: 'none' }
+          });
+        }
+        const a = document.createElement('a');
+        const sizeName = small ? '296x128' : '400x300';
+        const screenName = selected ? selected.id : 'screen';
+        a.href = dataUrl;
+        a.download = 'ezsign_display_' + screenName + '_' + sizeName + '_' + Date.now() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        window.alert('画像の作成に失敗しました: ' + (err && err.message ? err.message : err));
+      } finally {
+        setIsDownloading(false);
+      }
+    };
+
+    return h(Card, { variant: 'outlined', sx: { borderRadius: 1, position: 'sticky', top: 20 } }, [
+      h(CardContent, { key: 'cc' }, [
+        h(Stack, { direction: 'row', alignItems: 'center', justifyContent: 'space-between', spacing: 1, sx: { mb: 2 } }, [
+          h(Box, { key: 'title' }, [
+            h(Typography, { variant: 'h6', sx: { fontWeight: 900 } }, 'プレビュー'),
+            h(Typography, { variant: 'body2', color: 'text.secondary' }, selected.label + ' / ' + w + '×' + hgt + ' px' + (autoFit ? ' / 自動フィット' : ''))
+          ]),
+          h(Stack, { key: 'tools', direction: 'row', spacing: 1, alignItems: 'center', flexWrap: 'wrap', useFlexGap: true, justifyContent: 'flex-end' }, [
+            h(Chip, { key: 'chip', label: 'EZ Sign 4 COLOR', color: 'warning', variant: 'outlined' }),
+            h(Button, {
+              key: 'frameBlack',
+              size: 'small',
+              variant: frameColor === 'black' ? 'contained' : 'outlined',
+              color: 'primary',
+              onClick: () => setData && setData(prev => Object.assign({}, prev, { frameColor: 'black' }))
+            }, '黒枠'),
+            h(Button, {
+              key: 'frameWhite',
+              size: 'small',
+              variant: frameColor === 'white' ? 'contained' : 'outlined',
+              color: 'primary',
+              onClick: () => setData && setData(prev => Object.assign({}, prev, { frameColor: 'white' }))
+            }, '白枠')
+          ])
+        ]),
+        h('div', { key: 'stage', className: 'epaper-stage', ref: stageRef }, [
+          h('div', {
+            className: 'scaled-wrap',
+            style: {
+              width: deviceW * displayScale,
+              height: deviceH * displayScale
+            }
+          }, [
+            h('div', {
+              style: {
+                transform: 'scale(' + displayScale + ')',
+                transformOrigin: 'top left',
+                width: deviceW,
+                height: deviceH
+              }
+            }, [
+              h('div', { ref: deviceRef, className: 'ezsign-device ' + (small ? 'small' : 'large') + ' frame-' + frameColor }, [
+                h('div', { className: 'ezsign-mat' }, h(EpaperScreen, { data, innerRef: screenRef }))
+              ])
+            ])
+          ])
+        ]),
+        h(Stack, { key: 'downloadArea', spacing: 1, sx: { mt: 2 } }, [
+          h(Typography, { variant: 'body2', color: 'text.secondary' }, '※ 外側の黒枠・銀枠や余白はプレビュー表示専用です。ダウンロード画像には含まれず、実際の表示面（296×128 / 400×300）のみを出力します。'),
+          h(Stack, { key: 'download', direction: 'row', justifyContent: 'space-between', alignItems: 'center', spacing: 2 }, [
+            isDownloading
+              ? h(Stack, { key: 'progress', direction: 'row', spacing: 1, alignItems: 'center' }, [
+                  h(CircularProgress, { size: 18, thickness: 5 }),
+                  h(Typography, { variant: 'body2', color: 'text.secondary' }, '画像を生成しています…')
+                ])
+              : h('div', { key: 'spacer' }),
+            h(Button, { variant: 'contained', onClick: downloadPreview, disabled: isDownloading }, isDownloading ? '画像生成中…' : '表示面のみをダウンロード')
+          ])
+        ])
+      ])
+    ]);
+  }
+
+  function App() {
+    const [data, setData] = React.useState(initialData);
+    const theme = React.useMemo(() => createTheme({
+      palette: {
+        mode: 'light',
+        primary: { main: '#151515' },
+        secondary: { main: '#dc2626' },
+        warning: { main: '#eab308' },
+        background: { default: '#eef3f8', paper: '#f8fafc' }
+      },
+      typography: {
+        fontFamily: '"Roboto", "Noto Sans JP", system-ui, sans-serif',
+        h4: { fontWeight: 900, letterSpacing: '-.03em' },
+        h6: { fontWeight: 900 }
+      },
+      shape: { borderRadius: 4 },
+      components: {
+        MuiCard: {
+          styleOverrides: {
+            root: { borderRadius: 6, boxShadow: 'none' }
+          }
+        },
+        MuiPaper: {
+          styleOverrides: {
+            root: { borderRadius: 6 }
+          }
+        },
+        MuiButton: {
+          styleOverrides: {
+            root: { borderRadius: 4, textTransform: 'none', fontWeight: 700 }
+          }
+        },
+        MuiChip: {
+          styleOverrides: {
+            root: { borderRadius: 4, fontWeight: 700 }
+          }
+        },
+        MuiOutlinedInput: {
+          styleOverrides: {
+            root: { borderRadius: 4 }
+          }
+        },
+        MuiAlert: {
+          styleOverrides: {
+            root: { borderRadius: 4 }
+          }
+        }
+      }
+    }), []);
+
+    return h(ThemeProvider, { theme }, [
+      h(CssBaseline, { key: 'css' }),
+      h('div', { key: 'shell', className: 'app-shell' }, [
+        h(AppBar, { key: 'bar', position: 'static', color: 'transparent', elevation: 0, className: 'hero-gradient' }, [
+          h(Toolbar, { sx: { py: 2 } }, [
+            h(Container, { maxWidth: 'xl', sx: { px: { xs: 0, sm: 2 } } }, [
+              h(Stack, { direction: 'row', justifyContent: 'space-between', alignItems: 'center', spacing: 1.5 }, [
+                h(Box, { key: 'main' }, [
+                  h(Typography, { variant: 'h4' }, 'EZ Sign オンライン会議サイン生成ツール')
+                ])
+              ])
+            ])
+          ])
+        ]),
+
+        h(Container, { key: 'body', maxWidth: 'xl', sx: { mt: 3 } }, [
+          h(Grid, { container: true, spacing: 3 }, [
+            h(Grid, { item: true, xs: 12, lg: 7, key: 'left' }, h(SettingsPanel, { data, setData })),
+            h(Grid, { item: true, xs: 12, lg: 5, key: 'right' }, h(PreviewPanel, { data, setData }))
+          ])
+        ])
+      ])
+    ]);
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+})();
+</script>
+</body>
+</html>

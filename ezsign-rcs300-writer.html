@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EZ Sign × RC-S300 Writer v6.24 image upload</title>
+<title>EZ Sign × RC-S300 Writer v6.26 image upload / no dither default</title>
 <style>
   :root {
     color-scheme: light dark;
@@ -17,15 +17,15 @@
   }
   *{box-sizing:border-box} body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:2rem 1rem;line-height:1.6}.container{max-width:920px;margin:0 auto}h1{font-size:22px;font-weight:600;margin:0 0 .4rem}h2{font-size:15px;font-weight:600;margin:1.2rem 0 .5rem}.lead{color:var(--fg-sub);font-size:14px;margin:0 0 1.2rem}code{font-family:var(--mono);font-size:12px;background:var(--bg-sub);padding:1px 5px;border-radius:3px}.buttons{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}button{background:transparent;color:var(--fg);border:.5px solid var(--border);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit}button:hover:not(:disabled){background:var(--bg-sub)}button:disabled{opacity:.4;cursor:not-allowed}button.primary{background:var(--info-bg);color:var(--info-fg);border-color:var(--info-fg);font-weight:600}button.success{background:var(--success-bg);color:var(--success-fg);border-color:var(--success-fg);font-weight:600}button.warn{background:var(--warning-bg);color:var(--warning-fg);border-color:var(--warning-fg)}#status{font-size:13px;padding:10px 14px;border-radius:8px;background:var(--bg-sub);margin-bottom:1rem;min-height:20px}.status-info{background:var(--bg-sub);color:var(--fg)}.status-success{background:var(--success-bg);color:var(--success-fg)}.status-danger{background:var(--danger-bg);color:var(--danger-fg)}.status-warning{background:var(--warning-bg);color:var(--warning-fg)}#log{background:var(--bg-sub);border-radius:8px;padding:12px 14px;font-family:var(--mono);font-size:11.5px;line-height:1.55;max-height:620px;overflow-y:auto;white-space:pre-wrap}.log-tx{color:var(--info-fg)}.log-rx{color:var(--success-fg)}.log-err{color:var(--danger-fg)}.log-sys{color:var(--fg-sub)}.log-good{color:var(--success-fg);font-weight:700}.panel{background:var(--bg);border:.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:12px}.help{background:var(--bg-sub);border-radius:8px;padding:12px 16px;margin-bottom:1rem;font-size:13px;color:var(--fg-sub)}.help strong{color:var(--fg);font-weight:600}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}input[type="text"],input[type="number"]{background:var(--bg);color:var(--fg);border:.5px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-family:var(--mono);width:100%}#info-box{display:none;background:var(--success-bg);color:var(--success-fg);padding:12px 16px;border-radius:8px;margin-bottom:1rem;font-family:var(--mono);font-size:12px;white-space:pre-wrap}.small{font-size:13px;color:var(--fg-sub);margin:.1rem 0 .7rem}.row{display:flex;gap:8px;flex-wrap:wrap}.inline-check{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--fg-sub);border:.5px solid var(--border);border-radius:8px;padding:7px 10px;background:var(--bg)}.badge{display:inline-block;font-family:var(--mono);font-size:11px;border:.5px solid var(--border);border-radius:999px;padding:2px 8px;margin-left:6px;color:var(--fg-sub)}
 
-  .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.field{display:flex;flex-direction:column;gap:4px;min-width:0}.field label{font-size:12px;color:var(--fg-sub)}select,input[type="file"],input[type="range"]{background:var(--bg);color:var(--fg);border:.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;width:100%;min-width:0}.preview-wrap{display:grid;grid-template-columns:repeat(2,max-content);gap:14px;align-items:start;justify-content:center;margin:10px auto 12px}.preview-card{border:.5px solid var(--border);border-radius:10px;padding:10px;background:var(--bg-sub);width:fit-content;max-width:100%;text-align:center}.preview-card canvas{width:auto;max-width:100%;height:auto;display:block;margin:0 auto;image-rendering:auto;background:#fff;border-radius:6px;border:.5px solid var(--border);cursor:grab}.preview-card canvas:active{cursor:grabbing}.scale-label-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.scale-label-row label{margin-right:auto}.range-field>.scale-label-row,.range-field>label:first-child{min-height:34px;display:flex;align-items:center;margin:0}.range-field input[type="range"]{display:block;margin-top:0}.mini-btn{padding:4px 8px!important;font-size:12px!important}.preview-card .small{text-align:left}.note{font-size:12px;color:var(--fg-sub)}.algo-list{font-size:12px;color:var(--fg-sub);margin:6px 0 0;padding-left:1.1rem;overflow-x:auto}.algo-list li{white-space:nowrap;line-height:1.55}.algo-list strong{color:var(--fg)}.meter-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px}.process-stage{font-family:var(--mono);font-size:12px;color:var(--fg-sub);margin:0}.meter{height:8px;background:var(--bg-sub);border-radius:999px;overflow:hidden;border:.5px solid var(--border);margin:6px 0 8px}.meter>div{height:100%;width:0%;background:var(--info-fg);transition:width .15s}.danger-text{color:var(--danger-fg);font-weight:600}.algo-desc{background:var(--bg-sub);border:.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--fg);margin-top:10px}.formgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start}.control-note{font-size:11px;color:var(--fg-sub);margin-top:2px}.debug-only{} .mode-normal .debug-only{display:none!important}.mode-normal #process-note,.mode-normal #device-color-note,.mode-normal #info-box{display:none!important}.mode-switch{margin-top:16px;padding:12px 14px;border:.5px solid var(--border);border-radius:12px;background:var(--bg-sub);display:flex;justify-content:flex-end;align-items:center;gap:10px}.mode-switch label{font-size:13px;color:var(--fg-sub)}.mode-switch select{width:auto;min-width:140px}.slider-pair{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}.slider-pair .range-field{min-width:0}
+  .formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}.field{display:flex;flex-direction:column;gap:4px;min-width:0}.field label{font-size:12px;color:var(--fg-sub)}select,input[type="file"],input[type="range"]{background:var(--bg);color:var(--fg);border:.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;width:100%;min-width:0}.preview-wrap{display:grid;grid-template-columns:repeat(2,max-content);gap:14px;align-items:start;justify-content:center;margin:10px auto 12px}.preview-card{border:.5px solid var(--border);border-radius:10px;padding:10px;background:var(--bg-sub);width:fit-content;max-width:100%;text-align:center}.device-frame{display:inline-block;position:relative;background:linear-gradient(180deg,#1a1a1a 0%,#080808 100%);padding:var(--frame-top,14px) var(--frame-right,14px) var(--frame-bottom,36px) var(--frame-left,14px);border-radius:var(--frame-radius,12px);box-shadow:0 8px 22px rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.08)}.device-frame::before{content:"";position:absolute;inset:6px;border-radius:calc(var(--frame-radius,12px) - 4px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05),inset 0 -14px 24px rgba(255,255,255,.04);pointer-events:none}.device-frame.frame-42{--frame-top:14px;--frame-right:14px;--frame-bottom:52px;--frame-left:14px;--frame-radius:10px}.device-frame.frame-29{--frame-top:16px;--frame-right:18px;--frame-bottom:16px;--frame-left:26px;--frame-radius:12px}.device-screen{background:transparent;padding:0;border-radius:2px;overflow:hidden;box-shadow:none;line-height:0}.preview-card canvas{width:auto;max-width:100%;height:auto;display:block;margin:0 auto;image-rendering:auto;background:#fff;border-radius:0;border:none;cursor:grab}.preview-card canvas:active{cursor:grabbing}.scale-label-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.scale-label-row label{margin-right:auto}.range-field>.scale-label-row,.range-field>label:first-child{min-height:34px;display:flex;align-items:center;margin:0}.range-field input[type="range"]{display:block;margin-top:0}.mini-btn{padding:4px 8px!important;font-size:12px!important}.preview-card .small{text-align:left}.note{font-size:12px;color:var(--fg-sub)}.algo-list{font-size:12px;color:var(--fg-sub);margin:6px 0 0;padding-left:1.1rem;overflow-x:auto}.algo-list li{white-space:nowrap;line-height:1.55}.algo-list strong{color:var(--fg)}.meter-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px}.process-stage{font-family:var(--mono);font-size:12px;color:var(--fg-sub);margin:0}.meter{height:8px;background:var(--bg-sub);border-radius:999px;overflow:hidden;border:.5px solid var(--border);margin:6px 0 8px}.meter>div{height:100%;width:0%;background:var(--info-fg);transition:width .15s}.danger-text{color:var(--danger-fg);font-weight:600}.algo-desc{background:var(--bg-sub);border:.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--fg);margin-top:10px}.formgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start}.control-note{font-size:11px;color:var(--fg-sub);margin-top:2px}.debug-only{} .mode-normal .debug-only{display:none!important}.mode-normal #process-note,.mode-normal #device-color-note,.mode-normal #info-box{display:none!important}.mode-switch{margin-top:16px;padding:12px 14px;border:.5px solid var(--border);border-radius:12px;background:var(--bg-sub);display:flex;justify-content:flex-end;align-items:center;gap:10px}.mode-switch label{font-size:13px;color:var(--fg-sub)}.mode-switch select{width:auto;min-width:140px}.slider-toolbar{grid-column:1 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:2px}.slider-pair{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}.slider-pair .range-field{min-width:0}.slider-pair .range-field>label:first-child{min-height:34px;display:flex;align-items:center;margin:0}.slider-pair .range-field input[type="range"]{margin-top:0}
   @media (max-width:720px){.formgrid,.formgrid3,.preview-wrap{grid-template-columns:1fr;justify-content:stretch}.preview-card{width:100%}.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
 
 </style>
 </head>
 <body class="mode-normal">
 <div class="container">
-  <h1>EZ Sign × RC-S300 Writer v6.24 <span class="badge">画像アップロード / 自動向き補正</span></h1>
-  <p class="lead">RC-S300（WebUSB経由）で、お手元の画像をEZ Signに書き込むためのツールです。画像を選ぶと、中央トリミング・サイズ調整・4色ディザ変換まで自動で行い、そのままアップロードできます。<br><span style="font-size:12px;">※ 動作確認は <strong>RC-S300/S（業務用モデル）</strong> のみで行っています。一般向けの RC-S300/P では未検証です。</span></p>
+  <h1>EZ Sign × RC-S300 Writer v6.25 <span class="badge">画像アップロード / 自動向き補正 / ディザなし対応</span></h1>
+  <p class="lead">RC-S300（WebUSB経由）で、お手元の画像をEZ Signに書き込むためのツールです。画像を選ぶと、中央トリミング・サイズ調整・4色変換まで自動で行い、そのままアップロードできます。<br><span style="font-size:12px;">※ 動作確認は <strong>RC-S300/S（業務用モデル）</strong> のみで行っています。一般向けの RC-S300/P では未検証です。</span></p>
 
   <div class="help debug-only">
     <strong>対応サイズ:</strong> 4.2inch <code>400 x 300</code> と 2.9inch <code>296 x 128</code> の2種類です。基本は <strong>Auto</strong> でOK（接続時に GET INFO で勝手に判定します）。デバイスを繋ぐ前にプレビューだけ確認したい場合だけ、手動でサイズを選んでください。
@@ -67,6 +67,7 @@
       <div class="field">
         <label for="dither-algo">ディザリング方式</label>
         <select id="dither-algo">
+          <option value="none" selected>ディザリングなし（最近傍4色）</option>
           <option value="floyd">Floyd-Steinberg</option>
           <option value="atkinson">Atkinson</option>
           <option value="jjn">Jarvis, Judice, and Ninke (JJN)</option>
@@ -74,7 +75,7 @@
           <option value="burkes">Burkes</option>
           <option value="sierra3">Sierra3</option>
           <option value="sierra2">Sierra2</option>
-          <option value="sierra-lite" selected>Sierra Lite</option>
+          <option value="sierra-lite">Sierra Lite</option>
         </select>
       </div>
       <div class="field">
@@ -107,14 +108,14 @@
         <label class="control-note"><input type="checkbox" id="manual-flip-h"> 左右反転する</label>
       </div>
 
+      <div class="slider-toolbar">
+        <button type="button" id="btn-scale-fit" class="mini-btn">全体を収める 80%</button>
+        <button type="button" id="btn-scale-reset" class="mini-btn">100%に戻す</button>
+        <button type="button" id="btn-pan-reset" class="mini-btn">位置をリセット</button>
+      </div>
       <div class="slider-pair">
         <div class="field range-field">
-          <div class="scale-label-row">
-            <label for="image-scale">画像スケール: <span id="image-scale-value">100</span>%</label>
-            <button type="button" id="btn-scale-fit" class="mini-btn">全体を収める 80%</button>
-            <button type="button" id="btn-scale-reset" class="mini-btn">100%に戻す</button>
-            <button type="button" id="btn-pan-reset" class="mini-btn">位置をリセット</button>
-          </div>
+          <label for="image-scale">画像スケール: <span id="image-scale-value">100</span>%</label>
           <input type="range" id="image-scale" min="10" max="250" step="1" value="100">
         </div>
         <div class="field range-field">
@@ -126,11 +127,11 @@
     <div class="preview-wrap" id="preview-wrap">
       <div class="preview-card">
         <div class="small">トリミング後（入力画像）</div>
-        <canvas id="canvas-source" width="400" height="300"></canvas>
+        <div class="device-frame frame-42" id="frame-source"><div class="device-screen"><canvas id="canvas-source" width="400" height="300"></canvas></div></div>
       </div>
       <div class="preview-card">
-        <div class="small">4色ディザ変換後（表示プレビュー）</div>
-        <canvas id="canvas-dither" width="400" height="300"></canvas>
+        <div class="small">4色変換後（表示プレビュー）</div>
+        <div class="device-frame frame-42" id="frame-dither"><div class="device-screen"><canvas id="canvas-dither" width="400" height="300"></canvas></div></div>
       </div>
     </div>
     <div class="note" style="text-align:center;margin:-4px 0 8px;">※ プレビュー画像はマウスでドラッグして位置を調整できます。「位置をリセット」で中央に戻ります。</div>
@@ -168,6 +169,7 @@
   <div class="panel debug-only">
     <h2 style="margin-top:0">② アルゴリズム説明</h2>
     <ul class="algo-list">
+      <li><strong>ディザリングなし:</strong> 誤差拡散なし。各ピクセルを最も近い4色に単純変換。文字・線画・ロゴ向き。</li>
       <li><strong>Floyd-Steinberg:</strong> 一番オーソドックス。明るさのバランスが良いので迷ったらこれ。</li>
       <li><strong>Atkinson:</strong> 輪郭がくっきりめでコントラスト強め。ロゴやイラスト向き。</li>
       <li><strong>JJN:</strong> 階調はなめらかだが、少し眠い印象になりがち。</li>
@@ -737,6 +739,11 @@
   ];
 
   const KERNELS = {
+    none: {
+      label: 'No Dithering',
+      div: 1,
+      taps: []
+    },
     floyd: {
       label: 'Floyd-Steinberg', div: 16,
       taps: [[1,0,7],[-1,1,3],[0,1,5],[1,1,1]]
@@ -773,6 +780,7 @@
 
 
   const ALGO_DESCRIPTIONS = {
+    none: '<strong>ディザリングなし:</strong> 誤差拡散を行わず、各ピクセルを黒・白・黄・赤の最も近い色にそのまま割り当てます。文字・線画・ロゴのように粒状感を出したくない画像に向きます。',
     floyd: '<strong>Floyd-Steinberg:</strong> 最も標準的。誤差を100%拡散し、元の画像の明るさを忠実に再現します。写真にも文字にも使いやすい基準の方式です。',
     atkinson: '<strong>Atkinson:</strong> 誤差を75%だけ拡散。輪郭がくっきりし、コントラストが高く保たれるシャープな仕上がりになります。文字やアイコン寄りに向きます。',
     jjn: '<strong>Jarvis, Judice, and Ninke (JJN):</strong> より広い範囲（2ピクセル先まで）に細かく拡散。非常に滑らかですが、少しぼやけた柔らかい印象になります。写真寄りです。',
@@ -946,6 +954,17 @@
 
   function getManualTargetValue() {
     return $('target-size').value;
+  }
+
+  function updatePreviewFrames(target) {
+    const frameNames = ['frame-source', 'frame-dither'];
+    const klass = (target && target.width === 400 && target.height === 300) ? 'frame-42' : 'frame-29';
+    for (const id of frameNames) {
+      const el = $(id);
+      if (!el) continue;
+      el.classList.remove('frame-42', 'frame-29');
+      el.classList.add(klass);
+    }
   }
 
   function getPreviewTarget() {
@@ -1193,6 +1212,7 @@
   function renderProcessedPreview() {
     const sourceMode = getInputMode();
     const target = getPreviewTarget();
+    updatePreviewFrames(target);
     const orient = getOrientationSetting(target);
     const baseTarget = getBaseTargetForOrientation(target, orient);
     const scalePercent = parseInt($('image-scale').value, 10) || 100;
